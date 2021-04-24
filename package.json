@@ -1,0 +1,20 @@
+{
+  "name": "js--typescrypt-basic",
+  "version": "1.0.0",
+  "description": "Настройка окружения для современной разработки на TS, настройка тестового окружения",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/papaAndrew/js--typescrypt-basic.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/papaAndrew/js--typescrypt-basic/issues"
+  },
+  "homepage": "https://github.com/papaAndrew/js--typescrypt-basic#readme"
+}
