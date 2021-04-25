@@ -4,10 +4,11 @@
   "description": "Настройка окружения для современной разработки на TS, настройка тестового окружения",
   "private": true,
   "scripts": {
-    "lint": "prettier --check . && eslint .",
-    "lint:fix": "prettier --write . && eslint . --fix",
+    "lint": "prettier --check . && eslint --ext .js,.ts .",
+    "lint:fix": "prettier --write . && eslint . --fix --ext .js,.ts && tsc",
     "test": "jest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -34,9 +35,11 @@
     "babel-loader": "^8.2.2",
     "eslint": "^7.25.0",
     "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-airbnb-typescript": "^12.3.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jest": "^24.3.5",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
     "html-webpack-plugin": "^5.3.1",
     "husky": "^6.0.0",
     "jest": "^26.6.3",
