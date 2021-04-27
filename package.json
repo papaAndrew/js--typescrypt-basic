@@ -4,7 +4,7 @@
   "description": "Настройка окружения для современной разработки на TS, настройка тестового окружения",
   "private": true,
   "scripts": {
-    "lint": "prettier --check . && eslint --ext .js,.ts .",
+    "lint": "prettier --check . && eslint --ext .js,.ts . && tsc --noEmit",
     "lint:fix": "prettier --write . && eslint . --fix --ext .js,.ts && tsc",
     "test": "jest",
     "prepare": "husky install",
