@@ -15,11 +15,17 @@ function getNewCell(y: number, x: number): Cell {
 }
 
 function getNewRow(row: number, width: number): Cell[] {
-  return new Array(width).map((item, col) => getNewCell(row, col));
+  return new Array(width).fill({}).map((item, col) => getNewCell(row, col));
 }
 
+/**
+ *
+ * @param height Create matrix with specified size
+ * @param width
+ * @returns
+ */
 function getMatrix(height: number, width: number): Cell[][] {
-  return new Array(height).map((item, row) => getNewRow(row, width));
+  return new Array(height).fill([]).map((item, row) => getNewRow(row, width));
 }
 
 function isCellAlive(at: Cell): boolean {
@@ -29,7 +35,7 @@ function isCellAlive(at: Cell): boolean {
 function countAliveNeighbors(matrix: Cell[][], at: Cell): number {
   let ret = 0;
   const isNeighbor = (hisCoord: number, myCoord: number) =>
-    Math.abs(hisCoord - myCoord) < 2;
+    Math.abs(hisCoord - myCoord) === 1;
 
   matrix
     .filter((line: Cell[], y: number) => isNeighbor(y, at.row))
@@ -42,11 +48,13 @@ function countAliveNeighbors(matrix: Cell[][], at: Cell): number {
   return ret;
 }
 
-function getNewCellState(matrix: Cell[][], at: Cell) {
-  const ret: Cell = at;
+function getNextCellState(matrix: Cell[][], at: Cell) {
+  const ret: Cell = Object.assign({}, at);
   const lives: number = countAliveNeighbors(matrix, at);
 
-  if (isCellAlive(at)) {
+  //  console.log("countAliveNeighbors", lives);
+
+  if (isCellAlive(ret)) {
     ret.state = lives === 2 || lives === 3 ? 1 : 0;
   } else {
     ret.state = lives === 3 ? 1 : 0;
@@ -54,25 +62,31 @@ function getNewCellState(matrix: Cell[][], at: Cell) {
   return ret;
 }
 
+/**
+ * calculate new state of matrix depended of alive Cells' location
+ * @param matrix
+ * @returns
+ */
 function getNextGeneration(matrix: Cell[][]): Cell[][] {
-  const ret: Cell[][] = matrix;
+  const ret: Cell[][] = Object.assign([{}], matrix);
 
-  matrix.forEach((lines: Cell[]) =>
-    lines.forEach((cell: Cell) => {
-      ret[cell.row][cell.col] = getNewCellState(matrix, cell);
+  matrix.forEach((lines: Cell[], y: number) =>
+    lines.forEach((cell: Cell, x: number) => {
+      Object.assign(ret[y][x], getNextCellState(matrix, cell));
     })
   );
   return ret;
 }
-/*
-function numToCellStyate(num: number): CellState {
 
-  return num === 0 ? 0 : 1;
-}
-*/
+/**
+ * Invert Cell state
+ * @param {Cell} at cell to toggle state
+ * @returns {Cell}  cell with new state
+ */
 function toggleCellState(at: Cell): Cell {
-  const cell: Cell = at;
-  cell.state = at.state === 0 ? 1 : 0;
+  const cell: Cell = Object.assign({}, at);
+  cell.state = cell.state === 1 ? 0 : 1;
+
   return cell;
 }
 

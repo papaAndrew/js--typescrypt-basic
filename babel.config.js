@@ -5,9 +5,9 @@ module.exports = (api) => ({
     "@babel/plugin-transform-arrow-functions",
   ],
   presets: [
+    "@babel/preset-typescript",
     [
       "@babel/preset-env",
-      "@babel/preset-typescript",
       {
         useBuiltIns: "usage",
         // 2, 3 or { version: 2 | 3, proposals: boolean }, defaults to 2.
