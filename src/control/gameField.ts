@@ -1,13 +1,14 @@
 import {
   Cell,
   getMatrix,
-  getNextGeneration,
   toggleCellState,
+  getNextGeneration,
+  CellState,
 } from "../lib/utils";
 
 export interface IGameField {
-  getState(): Cell[][];
-  toggleCellState(y: number, x: number): void;
+  getState(): CellState[][];
+  toggleCell(y: number, x: number): void;
   nextGeneration(): void;
   setSize(height: number, width: number): void;
 }
@@ -24,15 +25,17 @@ export class GameField implements IGameField {
    * @param height
    */
   constructor(height = 1, width?: number) {
-    this.field = getMatrix(height, width || 0);
+    this.setSize(height, width || 0);
   }
 
   /**
    * Текущее состояние игровой матрицы
-   * @returns игровая матрица
+   * @returns матрица состояний
    */
-  public getState(): Cell[][] {
-    return this.field;
+  public getState(): CellState[][] {
+    return this.field.map((line: Cell[]) =>
+      line.map((cell: Cell) => cell.state)
+    );
   }
 
   /**
@@ -41,13 +44,22 @@ export class GameField implements IGameField {
    * @param x
    */
   public setSize(h: number, w: number): void {
-    const currentField: Cell[][] = this.getState();
+    const currentField: Cell[][] = this.field;
+    const newField = getMatrix(h, w);
 
-    this.field = getMatrix(h, w).map((line: Cell[], y: number) =>
-      line.map((cell: Cell, x: number) =>
-        currentField[y][x] ? currentField[y][x] : cell
-      )
-    );
+    if (currentField.length) {
+      this.field = newField.map((line: Cell[], y: number) =>
+        currentField[y]
+          ? line.map((cell: Cell, x: number) =>
+              currentField[y][x]
+                ? Object.assign(cell, currentField[y][x])
+                : cell
+            )
+          : line
+      );
+    } else {
+      this.field = newField;
+    }
   }
 
   /**
@@ -55,14 +67,16 @@ export class GameField implements IGameField {
    * @param y
    * @param x
    */
-  public toggleCellState(y: number, x: number): void {
-    this.field[y][x] = toggleCellState(this.field[y][x]);
+  public toggleCell(y: number, x: number): void {
+    this.field[y][x].state = toggleCellState(this.field[y][x]);
   }
 
   /**
    * рассчитывает и устанавливает следующее состояние поля
    */
-  public nextGeneration(): void {
+  public nextGeneration(): CellState[][] {
     this.field = getNextGeneration(this.field);
+
+    return this.getState();
   }
 }

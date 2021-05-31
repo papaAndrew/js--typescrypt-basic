@@ -1,21 +1,32 @@
+import { GameField } from "../src/control/gameField";
 import {
   Cell,
+  CellState,
   getMatrix,
-  getNextGeneration,
   toggleCellState,
+  countAliveNeighbors,
+  getNextGeneration,
 } from "../src/lib/utils";
 
-/**
- * @param {Cell[][]} field
- * @returns string
- */
-function fieldToStr(field: Cell[][]) {
-  return `\n${field
-    .map((line) => line.map((cell) => cell.state).join(""))
+function numsToCells(nums: number[][]): Cell[][] {
+  const numToState = function (num: number): CellState {
+    return num === 0 ? 0 : 1;
+  };
+
+  return nums.map((range, y) =>
+    range.map((value, x) => {
+      return { row: y, col: x, state: numToState(value) };
+    })
+  );
+}
+
+function numsToStr(mx: number[][]) {
+  return `\n${mx
+    .map((line) => line.map((item) => item).join(""))
     .join("\n")}\n`;
 }
 
-describe("Test utilities", () => {
+describe.skip("Test utilities", () => {
   describe("Function getMatrix creates matrix with specified size", () => {
     [
       [10, 0],
@@ -38,71 +49,106 @@ describe("Test utilities", () => {
     });
   });
 
-  describe("Function getNextGeneration calculate new state of matrix depended of combinations", () => {
-    const I: Cell = {
-      row: 0,
-      col: 0,
-      state: 1,
-    };
-    /**
-     * Cell dead
-     */
-    const O: Cell = {
-      row: 0,
-      col: 0,
-      state: 0,
-    };
-
+  describe("tesing countAliveNeighbors", () => {
     [
-      { field: [[O]], nextState: [[O]] },
-      { field: [[O], [O]], nextState: [[O], [O]] },
-      { field: [[I]], nextState: [[O]] },
-      { field: [[O], [I]], nextState: [[O], [O]] },
+      { states: [[0, 1]], neighbors: [[1, 0]] },
       {
-        field: [
-          [I, I],
-          [I, O],
+        states: [
+          [0, 1],
+          [0, 1],
         ],
-        nextState: [
-          [I, I],
-          [I, I],
+        neighbors: [
+          [2, 1],
+          [2, 1],
         ],
       },
       {
-        field: [
-          [I, I],
-          [I, I],
+        states: [
+          [0, 0, 1, 0],
+          [0, 0, 0, 1],
+          [0, 1, 1, 1],
+        ],
+        neighbors: [
+          [0, 1, 1, 2],
+          [1, 3, 5, 3],
+          [1, 1, 3, 2],
+        ],
+      },
+    ].forEach((suite) => {
+      describe(`for field ${numsToStr(
+        suite.states
+      )} neighbors number is ${numsToStr(suite.neighbors)}`, () => {
+        const gameField: Cell[][] = numsToCells(suite.states);
+
+        for (let y = 0; y < gameField.length; y++) {
+          const range: Cell[] = gameField[y];
+          for (let x = 0; x < range.length; x++) {
+            const cell: Cell = range[x];
+            const expectedValue = suite.neighbors[y][x];
+            it(`cell[${y}:${x}] have ${expectedValue} neighbours`, () => {
+              expect(countAliveNeighbors(gameField, cell)).toBe(expectedValue);
+            });
+          }
+        }
+      });
+    });
+  });
+
+  describe("Function getNextGeneration calculate new state of matrix depended of combinations", () => {
+    [
+      { prevState: [[1]], nextState: [[0]] },
+      { prevState: [[0], [0]], nextState: [[0], [0]] },
+      { prevState: [[1]], nextState: [[0]] },
+      { prevState: [[0], [1]], nextState: [[0], [0]] },
+      {
+        prevState: [
+          [1, 1],
+          [1, 0],
         ],
         nextState: [
-          [I, I],
-          [I, I],
+          [1, 1],
+          [1, 1],
         ],
       },
       {
-        field: [
-          [I, I, I],
-          [I, I, I],
+        prevState: [
+          [1, 1],
+          [1, 1],
         ],
         nextState: [
-          [I, O, I],
-          [I, O, I],
+          [1, 1],
+          [1, 1],
         ],
       },
       {
-        field: [
-          [I, O, I],
-          [I, O, I],
+        prevState: [
+          [1, 1, 1],
+          [1, 1, 1],
         ],
         nextState: [
-          [O, O, O],
-          [O, O, O],
+          [1, 0, 1],
+          [1, 0, 1],
         ],
       },
-    ].forEach((el) => {
-      it(`for current ${fieldToStr(el.field)} the next is ${fieldToStr(
-        el.nextState
+      {
+        prevState: [
+          [1, 0, 1],
+          [1, 0, 1],
+        ],
+        nextState: [
+          [0, 0, 0],
+          [0, 0, 0],
+        ],
+      },
+    ].forEach((suite) => {
+      it(`for state ${numsToStr(suite.prevState)} the next is ${numsToStr(
+        suite.nextState
       )}`, () => {
-        expect(getNextGeneration(el.field)).toEqual(el.nextState);
+        const fieldExpected: Cell[][] = numsToCells(suite.nextState);
+        const fieldBefore: Cell[][] = numsToCells(suite.prevState);
+        const fieldAfter: Cell[][] = getNextGeneration(fieldBefore);
+
+        expect(fieldAfter).toEqual(fieldExpected);
       });
     });
   });
