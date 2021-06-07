@@ -1,10 +1,23 @@
-import { GameField } from "../src/control/gameField";
-import { CellState } from "../src/lib/utils";
+import { GameField } from "../src/model/GameField";
+import { CellState } from "../src/model/utils";
 
-function numsToStr(mx: number[][]) {
-  return `\n${mx
-    .map((line) => line.map((item) => item).join(""))
-    .join("\n")}\n`;
+function createFieldWithState(cellState: number[][]): GameField {
+  const h: number = cellState.length;
+
+  if (cellState[0]) {
+    const w: number = cellState[0].length;
+    const gameField = new GameField(h, w);
+    for (let y = 0; y < h; y += 1) {
+      for (let x = 0; x < w; x += 1) {
+        if (cellState[y][x]) {
+          gameField.toggleCell(y, x);
+        }
+      }
+    }
+    return gameField;
+  } else {
+    return new GameField(h);
+  }
 }
 
 describe("Use GameField", () => {
@@ -46,8 +59,6 @@ describe("Use GameField", () => {
 
     for (let y = 0; y < 3; y += 1) {
       for (let x = 0; x < 3; x += 1) {
-        const cellState: CellState = gameField.getState()[y][x];
-
         it(`Cell[${y}, ${x}]'s state "${stateOff}" toggles to "${stateOn}"`, () => {
           expect(gameField.getState()[y][x]).toBe(stateOff);
 
@@ -124,24 +135,49 @@ describe("Use GameField", () => {
         ],
       },
     ].forEach((suite) => {
-      const h: number = suite.prevState.length;
-      const w: number = suite.prevState[0].length;
-
-      it(`for size ${h}:${w} toggled ${numsToStr(
+      it(`if cells ${JSON.stringify(
         suite.prevState
-      )} so next state is according to ${numsToStr(suite.nextState)}`, () => {
-        const gameField: GameField = new GameField(h, w);
+      )} toggled so next state is according to ${JSON.stringify(
+        suite.nextState
+      )}`, () => {
+        const gameField: GameField = createFieldWithState(suite.prevState);
 
-        for (let y = 0; y < h; y += 1) {
-          for (let x = 0; x < w; x += 1) {
-            if (suite.prevState[y][x]) {
-              gameField.toggleCell(y, x);
-            }
-          }
-        }
         const nextState: CellState[][] = gameField.nextGeneration();
 
         expect(nextState).toEqual(suite.nextState);
+      });
+    });
+  });
+
+  describe("isAnyoneAlive", () => {
+    [
+      {
+        fieldState: [],
+        hasAlive: false,
+      },
+      {
+        fieldState: [[]],
+        hasAlive: false,
+      },
+      {
+        fieldState: [[1]],
+        hasAlive: true,
+      },
+      {
+        fieldState: [[1], [0]],
+        hasAlive: true,
+      },
+      {
+        fieldState: [[0], [0]],
+        hasAlive: false,
+      },
+    ].forEach((suite) => {
+      it(`should return ${suite.hasAlive} for ${JSON.stringify(
+        suite.fieldState
+      )}`, () => {
+        const gameField = createFieldWithState(suite.fieldState);
+
+        expect(gameField.isAnyoneAlive()).toBe(suite.hasAlive);
       });
     });
   });

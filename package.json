@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "lint": "prettier --check . && eslint --ext .js,.ts . && tsc --noEmit",
-    "lint:fix": "prettier --write . && eslint . --fix --ext .js,.ts && tsc",
+    "lint:fix": "prettier --write . && eslint . --fix --ext .js,.ts",
     "test": "jest",
     "prepare": "husky install",
     "build": "webpack"

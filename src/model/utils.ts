@@ -22,8 +22,8 @@ function getNewRow(row: number, width: number): Cell[] {
 }
 
 /**
- *
- * @param height Create matrix with specified size
+ * Create matrix with specified size
+ * @param height
  * @param width
  * @returns
  */
@@ -70,8 +70,8 @@ function getNextCellState(gameField: Cell[][], atCell: Cell): CellState {
  * @returns
  */
 function getNextGeneration(gameFiled: Cell[][]): Cell[][] {
-  return gameFiled.map((lines: Cell[], y: number) =>
-    lines.map((cell: Cell, x: number) => {
+  return gameFiled.map((lines: Cell[]) =>
+    lines.map((cell: Cell) => {
       const ret: Cell = Object.assign({}, cell);
       ret.state = getNextCellState(gameFiled, cell);
       return ret;

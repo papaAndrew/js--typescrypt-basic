@@ -1,15 +1,15 @@
 import {
   Cell,
+  CellState,
   getMatrix,
   toggleCellState,
   getNextGeneration,
-  CellState,
-} from "../lib/utils";
+} from "./utils";
 
 export interface IGameField {
   getState(): CellState[][];
   toggleCell(y: number, x: number): void;
-  nextGeneration(): void;
+  nextGeneration(): CellState[][];
   setSize(height: number, width: number): void;
 }
 
@@ -78,5 +78,18 @@ export class GameField implements IGameField {
     this.field = getNextGeneration(this.field);
 
     return this.getState();
+  }
+
+  public isAnyoneAlive(): boolean {
+    for (let i = 0; i < this.field.length; i += 1) {
+      const range = this.field[i];
+      for (let j = 0; j < range.length; j += 1) {
+        const cell = range[j];
+        if (cell.state) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

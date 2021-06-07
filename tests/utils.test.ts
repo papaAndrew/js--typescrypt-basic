@@ -1,12 +1,13 @@
-import { GameField } from "../src/control/gameField";
 import {
   Cell,
   CellState,
+  STATE_ALIVE,
+  STATE_DEAD,
   getMatrix,
   toggleCellState,
   countAliveNeighbors,
   getNextGeneration,
-} from "../src/lib/utils";
+} from "../src/model/utils";
 
 function numsToCells(nums: number[][]): Cell[][] {
   const numToState = function (num: number): CellState {
@@ -26,7 +27,7 @@ function numsToStr(mx: number[][]) {
     .join("\n")}\n`;
 }
 
-describe.skip("Test utilities", () => {
+describe("Test utilities", () => {
   describe("Function getMatrix creates matrix with specified size", () => {
     [
       [10, 0],
@@ -157,23 +158,20 @@ describe.skip("Test utilities", () => {
     const I: Cell = {
       row: 0,
       col: 0,
-      state: 1,
+      state: STATE_ALIVE,
     };
-    /**
-     * Cell dead
-     */
     const O: Cell = {
       row: 0,
       col: 0,
-      state: 0,
+      state: STATE_DEAD,
     };
 
     it(`Cell state before: ${I.state}, after: ${O.state}`, () => {
-      expect(toggleCellState(I)).toEqual(O);
+      expect(toggleCellState(I)).toEqual(STATE_DEAD);
     });
 
     it(`Cell state before: ${O.state}, after: ${I.state}`, () => {
-      expect(toggleCellState(O)).toEqual(I);
+      expect(toggleCellState(O)).toEqual(STATE_ALIVE);
     });
   });
 });
