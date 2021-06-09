@@ -62,6 +62,7 @@ describe("Game", () => {
         height: state.length,
         width: state[0].length,
         isPlaying: false,
+        stepMs: stepDuration,
       };
 
       expect(gameField.getState).toBeCalled();

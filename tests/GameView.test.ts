@@ -16,8 +16,8 @@ describe("gameView", () => {
     it("renders some initial markup on construction", () => {
       new GameWiew(el);
 
-      expect(el.querySelector(".gameField")).not.toBeNull();
-      expect(el.querySelector(".gameControls")).not.toBeNull();
+      expect(el.querySelector(".game-field")).not.toBeNull();
+      expect(el.querySelector(".control-panel")).not.toBeNull();
     });
 
     it("has public methods", () => {
@@ -107,7 +107,12 @@ describe("gameView", () => {
       expect(inputWidth).not.toBeNull();
       expect(Number(inputWidth.value)).toBe(0);
 
-      gameView.updateGameState({ height: 3, width: 4, isPlaying: true });
+      gameView.updateGameState({
+        height: 3,
+        width: 4,
+        isPlaying: true,
+        stepMs: 10,
+      });
 
       expect(el.querySelector(".run-button.run-button--stopped")).toBeNull();
       expect(
@@ -124,11 +129,16 @@ describe("gameView", () => {
     it("calls function from .onGameChange on control interaction", () => {
       const onGameStateChange = jest.fn();
       gameView.onGameStateChange(onGameStateChange);
-      gameView.updateGameState({ height: 2, width: 3, isPlaying: true });
+      gameView.updateGameState({
+        height: 2,
+        width: 3,
+        isPlaying: true,
+        stepMs: 10,
+      });
       el.querySelector(".run-button.run-button--playing")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange).toHaveBeenCalledWith(true);
+      expect(onGameStateChange).toHaveBeenCalledWith(true, 10);
 
       /*       gameView.updateGameState({ height: 2, width: 3, isPlaying: false });
       el.querySelector(".run-button.run-button--stopped")?.dispatchEvent(
@@ -155,9 +165,11 @@ describe("gameView", () => {
         [1, 2],
       ].forEach(([height, width]) => {
         inputHeight.value = `${height}`;
-        inputWidth.value = `${width}`;
-
         inputHeight.dispatchEvent(new Event("change", { bubbles: true }));
+
+        inputWidth.value = `${width}`;
+        inputWidth.dispatchEvent(new Event("change", { bubbles: true }));
+
         expect(onFieldSizeChange).toBeCalledWith(height, width);
       });
     });
