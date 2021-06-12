@@ -1,9 +1,5 @@
-function component() {
-  const element = document.createElement("div");
+import { Game } from "./control/Game";
+import { GameField } from "./model/GameField";
+import { GameWiew } from "./view/GameView";
 
-  element.innerHTML = "Hello, webpack";
-
-  return element;
-}
-
-document.body.appendChild(component());
+new Game(new GameField(10, 10), new GameWiew(document.body));
