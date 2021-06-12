@@ -6,13 +6,14 @@ import { GameState, IGameView } from "../src/view/GameView";
 const sleep = (x: number) => new Promise((res) => setTimeout(res, x));
 
 describe("Game", () => {
-  const stepDuration = 10;
+  const stepDuration = 100;
   let state: CellState[][];
   let gameField: IGameField;
   let gameView: IGameView;
 
   let onGameStateChange = jest.fn();
   let onFieldSizeChange = jest.fn();
+  let onStepDurationChange = jest.fn();
   let onCellClick = jest.fn();
 
   const getGameField = (): IGameField => ({
@@ -33,6 +34,9 @@ describe("Game", () => {
     }),
     onFieldSizeChange: jest.fn((cb) => {
       onFieldSizeChange = jest.fn(cb);
+    }),
+    onStepDurationChange: jest.fn((cb) => {
+      onStepDurationChange = jest.fn(cb);
     }),
   });
 
@@ -190,6 +194,35 @@ describe("Game", () => {
       expect(gameField.getState).toHaveBeenCalledTimes(9);
       expect(gameView.updateGameField).toHaveBeenCalledTimes(9);
       expect(gameView.updateGameState).toHaveBeenCalledTimes(9);
+    });
+
+    it("can change game speed by onStepDurationChange", async () => {
+      onGameStateChange(true);
+
+      expect(gameField.nextGeneration).toHaveBeenCalledTimes(1);
+      expect(gameView.updateGameState).toHaveBeenCalledTimes(2);
+
+      await sleep(100);
+
+      expect(gameField.nextGeneration).toHaveBeenCalledTimes(2);
+      expect(gameView.updateGameState).toHaveBeenCalledTimes(3);
+
+      onStepDurationChange(200);
+
+      await sleep(100);
+      // последняя сработка на 100, только что стратануло на 200
+      expect(gameField.nextGeneration).toHaveBeenCalledTimes(3);
+      expect(gameView.updateGameState).toHaveBeenCalledTimes(4);
+
+      await sleep(100);
+      // не прошло 200
+      expect(gameField.nextGeneration).toHaveBeenCalledTimes(3);
+      expect(gameView.updateGameState).toHaveBeenCalledTimes(4);
+
+      await sleep(200);
+      // прошло 2*200
+      expect(gameField.nextGeneration).toHaveBeenCalledTimes(4);
+      expect(gameView.updateGameState).toHaveBeenCalledTimes(5);
     });
   });
 });

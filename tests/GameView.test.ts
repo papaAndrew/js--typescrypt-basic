@@ -28,6 +28,7 @@ describe("gameView", () => {
       expect(gameView.onCellClick).toBeInstanceOf(Function);
       expect(gameView.onGameStateChange).toBeInstanceOf(Function);
       expect(gameView.onFieldSizeChange).toBeInstanceOf(Function);
+      expect(gameView.onStepDurationChange).toBeInstanceOf(Function);
     });
   });
 
@@ -126,7 +127,7 @@ describe("gameView", () => {
       expect(Number(inputWidth.value)).toBe(4);
     });
 
-    it("calls function from .onGameChange on control interaction", () => {
+    it("calls function from .onGameStateChange on control interaction", () => {
       const onGameStateChange = jest.fn();
       gameView.onGameStateChange(onGameStateChange);
       gameView.updateGameState({
@@ -138,14 +139,18 @@ describe("gameView", () => {
       el.querySelector(".run-button.run-button--playing")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange).toHaveBeenCalledWith(true, 10);
+      expect(onGameStateChange).toHaveBeenCalledWith(true);
 
-      /*       gameView.updateGameState({ height: 2, width: 3, isPlaying: false });
+      gameView.updateGameState({
+        height: 2,
+        width: 3,
+        isPlaying: false,
+        stepMs: 10,
+      });
       el.querySelector(".run-button.run-button--stopped")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange.calls[1]).toHaveBeenCalledWith(false);
- */
+      expect(onGameStateChange.mock.calls[1][0]).toBe(false);
     });
 
     it("calls .onFieldSizeChange on field size change interaction", () => {
@@ -172,6 +177,22 @@ describe("gameView", () => {
 
         expect(onFieldSizeChange).toBeCalledWith(height, width);
       });
+    });
+
+    it("calls function from .onStepDurationChange on control interaction", () => {
+      const inputStep: HTMLInputElement = el.querySelector(
+        "input[type='number'].game-state.step-duration"
+      ) as HTMLInputElement;
+
+      const onStepDurationChange = jest.fn();
+      gameView.onStepDurationChange(onStepDurationChange);
+      inputStep.value = "100";
+      inputStep?.dispatchEvent(new Event("change", { bubbles: true }));
+      expect(onStepDurationChange).toHaveBeenCalledWith(100);
+
+      inputStep.value = "5555";
+      inputStep?.dispatchEvent(new Event("change", { bubbles: true }));
+      expect(onStepDurationChange.mock.calls[1][0]).toBe(5555);
     });
   });
 });

@@ -8,10 +8,8 @@ export type GameState = {
 };
 
 export type FieldCellChange = (row: number, column: number) => void;
-export type GameStateChange = (
-  newState: boolean,
-  stepDurationMs: number
-) => void;
+export type GameStateChange = (newState: boolean) => void;
+export type StepDurationChange = (stepDurationMs: number) => void;
 
 export interface IGameView {
   updateGameField(cellStates: CellState[][]): void;
@@ -19,6 +17,7 @@ export interface IGameView {
   onCellClick(cb: FieldCellChange): void;
   onGameStateChange(cb: GameStateChange): void;
   onFieldSizeChange(cb: FieldCellChange): void;
+  onStepDurationChange(cd: StepDurationChange): void;
 }
 
 function getElementSizeY(el?: HTMLElement): HTMLInputElement {
@@ -111,6 +110,8 @@ export class GameWiew implements IGameView {
 
   private cbFieldSizeChange: FieldCellChange | undefined;
 
+  private cbStepDurationChange: StepDurationChange | undefined;
+
   constructor(parentElement: HTMLElement) {
     this.el = parentElement;
     this.render();
@@ -122,16 +123,16 @@ export class GameWiew implements IGameView {
     const buttonPlay: HTMLElement = getElementTogglePlay();
     buttonPlay.addEventListener("click", () => {
       if (this.cbGameStateChange) {
-        this.cbGameStateChange(this.gameState.isPlaying, this.gameState.stepMs);
+        this.cbGameStateChange(this.gameState.isPlaying);
       }
     });
     controlPanel.append(buttonPlay);
 
     const inputStep: HTMLInputElement = getElementStepDuration();
     inputStep.addEventListener("change", (ev: Event) => {
-      if (this.cbGameStateChange) {
+      if (this.cbStepDurationChange) {
         this.gameState.stepMs = Number((ev.target as HTMLInputElement).value);
-        this.cbGameStateChange(this.gameState.isPlaying, this.gameState.stepMs);
+        this.cbStepDurationChange(this.gameState.stepMs);
       }
     });
     controlPanel.append(inputStep);
@@ -248,5 +249,8 @@ export class GameWiew implements IGameView {
 
   public onFieldSizeChange(cb: FieldCellChange): void {
     this.cbFieldSizeChange = cb;
+  }
+  public onStepDurationChange(cb: StepDurationChange): void {
+    this.cbStepDurationChange = cb;
   }
 }

@@ -29,8 +29,12 @@ export class Game {
       this.cellClick(row, col);
     });
 
-    this.gameView.onGameStateChange((newState: boolean, stepMs?: number) => {
-      this.gameStateChange(newState, stepMs);
+    this.gameView.onGameStateChange((newState: boolean) => {
+      this.gameStateChange(newState);
+    });
+
+    this.gameView.onStepDurationChange((newStep: number) => {
+      this.setStepDuration(newStep);
     });
   }
 
@@ -39,9 +43,7 @@ export class Game {
     this.updateGameState();
   }
 
-  private gameStateChange(newState: boolean, stepDuration?: number) {
-    this.setStepDuration(stepDuration);
-
+  private gameStateChange(newState: boolean) {
     if (newState) {
       this.start();
     } else {
