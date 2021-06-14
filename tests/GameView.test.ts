@@ -87,7 +87,12 @@ describe("gameView", () => {
     });
 
     it("renders correct game state on .updateGameState", () => {
-      //      const gameView = new GameWiew(el);
+      gameView.updateGameState({
+        height: 1,
+        width: 0,
+        isPlaying: false,
+        stepMs: 1000,
+      });
 
       expect(
         el.querySelector(".run-button.run-button--stopped")
@@ -95,6 +100,12 @@ describe("gameView", () => {
       expect(
         el.querySelector(".run-button.run-button--stopped")?.innerHTML
       ).toBe("Play");
+
+      const stepDuration: HTMLInputElement = el.querySelector(
+        "input.game-state.step-duration"
+      ) as HTMLInputElement;
+      expect(stepDuration).not.toBeNull();
+      expect(Number(stepDuration.value)).toBe(1000);
 
       const inputHeight: HTMLInputElement = el.querySelector(
         "input[type='number'].field-size.field-size--height"
@@ -125,6 +136,7 @@ describe("gameView", () => {
 
       expect(Number(inputHeight.value)).toBe(3);
       expect(Number(inputWidth.value)).toBe(4);
+      expect(Number(stepDuration.value)).toBe(10);
     });
 
     it("calls function from .onGameStateChange on control interaction", () => {
@@ -139,7 +151,7 @@ describe("gameView", () => {
       el.querySelector(".run-button.run-button--playing")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange).toHaveBeenCalledWith(true);
+      expect(onGameStateChange).toHaveBeenCalledWith(false);
 
       gameView.updateGameState({
         height: 2,
@@ -150,7 +162,7 @@ describe("gameView", () => {
       el.querySelector(".run-button.run-button--stopped")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange.mock.calls[1][0]).toBe(false);
+      expect(onGameStateChange.mock.calls[1][0]).toBe(true);
     });
 
     it("calls .onFieldSizeChange on field size change interaction", () => {

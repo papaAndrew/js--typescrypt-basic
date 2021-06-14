@@ -1,3 +1,4 @@
+import "../style/style.css";
 import { Game } from "./control/Game";
 import { GameField } from "./model/GameField";
 import { GameWiew } from "./view/GameView";

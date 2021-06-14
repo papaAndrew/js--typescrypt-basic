@@ -20,7 +20,7 @@ export interface IGameView {
   onStepDurationChange(cd: StepDurationChange): void;
 }
 
-function getElementSizeY(el?: HTMLElement): HTMLInputElement {
+function getSizeYElement(el?: HTMLElement): HTMLInputElement {
   if (el) {
     return el.querySelector(
       "input.field-size.field-size--height"
@@ -35,7 +35,7 @@ function getElementSizeY(el?: HTMLElement): HTMLInputElement {
   }
 }
 
-function getElementSizeX(el?: HTMLElement): HTMLInputElement {
+function getSizeXElement(el?: HTMLElement): HTMLInputElement {
   if (el) {
     return el.querySelector(
       "input.field-size.field-size--width"
@@ -50,7 +50,7 @@ function getElementSizeX(el?: HTMLElement): HTMLInputElement {
   }
 }
 
-function getElementStepDuration(el?: HTMLElement): HTMLInputElement {
+function getStepDurationElement(el?: HTMLElement): HTMLInputElement {
   if (el) {
     return el.querySelector(
       "input.game-state.step-duration"
@@ -65,7 +65,7 @@ function getElementStepDuration(el?: HTMLElement): HTMLInputElement {
   }
 }
 
-function getElementTogglePlay(el?: HTMLElement): HTMLButtonElement {
+function getTogglePlayElement(el?: HTMLElement): HTMLButtonElement {
   if (el) {
     return el.querySelector("button.run-button") as HTMLButtonElement;
   } else {
@@ -95,6 +95,16 @@ function getGameFieldElement(el?: HTMLElement): HTMLDivElement {
   }
 }
 
+function getFieldTableElement(el?: HTMLElement): HTMLTableElement {
+  if (el) {
+    return el.querySelector("table.cells-grid") as HTMLTableElement;
+  } else {
+    const table: HTMLTableElement = document.createElement("table");
+    table.classList.add("cells-grid");
+    return table;
+  }
+}
+
 export class GameWiew implements IGameView {
   private el: HTMLElement;
   private gameState: GameState = {
@@ -103,6 +113,7 @@ export class GameWiew implements IGameView {
     isPlaying: false,
     stepMs: 1000,
   };
+  //private filedState: CellState[][] = [[]];
 
   private cbCellClick: FieldCellChange | undefined;
 
@@ -117,117 +128,99 @@ export class GameWiew implements IGameView {
     this.render();
   }
 
-  private drawControlPanel() {
-    const controlPanel: HTMLElement = getControlPanelElement();
-
-    const buttonPlay: HTMLElement = getElementTogglePlay();
-    buttonPlay.addEventListener("click", () => {
-      if (this.cbGameStateChange) {
-        this.cbGameStateChange(this.gameState.isPlaying);
-      }
-    });
-    controlPanel.append(buttonPlay);
-
-    const inputStep: HTMLInputElement = getElementStepDuration();
-    inputStep.addEventListener("change", (ev: Event) => {
-      if (this.cbStepDurationChange) {
-        this.gameState.stepMs = Number((ev.target as HTMLInputElement).value);
-        this.cbStepDurationChange(this.gameState.stepMs);
-      }
-    });
-    controlPanel.append(inputStep);
-
-    const inputHeight: HTMLInputElement = getElementSizeY();
-    inputHeight.addEventListener("change", (ev: Event) => {
-      if (this.cbFieldSizeChange) {
-        this.gameState.height = Number((ev.target as HTMLInputElement).value);
-        this.cbFieldSizeChange(this.gameState.height, this.gameState.width);
-      }
-    });
-    controlPanel.append(inputHeight);
-
-    const inputWidth: HTMLInputElement = getElementSizeX();
-    inputWidth.addEventListener("change", (ev: Event) => {
-      if (this.cbFieldSizeChange) {
-        this.gameState.width = Number((ev.target as HTMLInputElement).value);
-        this.cbFieldSizeChange(this.gameState.height, this.gameState.width);
-      }
-    });
-    controlPanel.append(inputWidth);
-
-    return controlPanel;
-  }
-
   /**
    * Отрисовка разметки при обновлении страницы
    */
   render(): void {
     const newEl = this.el;
-    newEl.innerHTML = "";
 
-    // игровое поле
-    const gameField: HTMLElement = getGameFieldElement();
-    newEl.append(gameField);
+    const controlPanel: HTMLElement = getControlPanelElement();
 
-    // панель управления
-    const controlPanel: HTMLElement = this.drawControlPanel();
+    const inputHeight: HTMLInputElement = getSizeYElement();
+    inputHeight.addEventListener("change", (ev: Event) => {
+      this.gameState.height = Number((ev.target as HTMLInputElement).value);
+      if (this.cbFieldSizeChange) {
+        this.cbFieldSizeChange(this.gameState.height, this.gameState.width);
+      }
+    });
+    controlPanel.append(inputHeight);
+
+    const inputWidth: HTMLInputElement = getSizeXElement();
+    inputWidth.addEventListener("change", (ev: Event) => {
+      this.gameState.width = Number((ev.target as HTMLInputElement).value);
+      if (this.cbFieldSizeChange) {
+        this.cbFieldSizeChange(this.gameState.height, this.gameState.width);
+      }
+    });
+    controlPanel.append(inputWidth);
+
+    const inputStep: HTMLInputElement = getStepDurationElement();
+    inputStep.addEventListener("change", (ev: Event) => {
+      this.gameState.stepMs = Number((ev.target as HTMLInputElement).value);
+      if (this.cbStepDurationChange) {
+        this.cbStepDurationChange(this.gameState.stepMs);
+      }
+    });
+    controlPanel.append(inputStep);
+
+    const buttonPlay: HTMLElement = getTogglePlayElement();
+    buttonPlay.addEventListener("click", () => {
+      if (this.cbGameStateChange) {
+        this.cbGameStateChange(!this.gameState.isPlaying);
+      }
+    });
+    controlPanel.append(buttonPlay);
     newEl.append(controlPanel);
 
+    // игровое поле
+    const gameFieldEl: HTMLElement = getGameFieldElement();
+
+    const fieldTable: HTMLTableElement = getFieldTableElement();
+    fieldTable.addEventListener("click", (ev) => {
+      if (this.cbCellClick) {
+        const target: HTMLElement = ev.target as HTMLElement;
+        if (target.matches(".cell[data-y][data-x]")) {
+          const y = Number(target.getAttribute("data-y"));
+          const x = Number(target.getAttribute("data-x"));
+          this.cbCellClick(y, x);
+        }
+      }
+    });
+    gameFieldEl.appendChild(fieldTable);
+    newEl.append(gameFieldEl);
+
     this.el = newEl;
-    this.updateGameState(this.gameState);
   }
 
-  public updateGameField(cellStates: CellState[][]): void {
-    this.gameState.height = cellStates.length;
-    this.gameState.width = cellStates[0].length;
-
-    const table: string = cellStates
+  public updateGameField(fieldState: CellState[][]): void {
+    const tbody: string = fieldState
       .map((range: CellState[], y: number) => {
         return `<tr>${range
           .map((state: CellState, x: number) => {
             if (state === STATE_ALIVE) {
               return `<td 
-            data-y=${y}
-            data-x=${x}
-          class="cell cell--alive" 
-          style="background-color:#FA58D0; height:10px; width:10px;"></td>`;
+                data-y=${y}
+                data-x=${x}
+                class="cell cell--alive">&#10059;</td>`;
             }
             return `<td 
-          data-y=${y}
-          data-x=${x}
-        class="cell cell--dead" 
-        style="background-color:#FFFFFF; height:10px; width:10px;"></td>`;
+              data-y=${y}
+              data-x=${x}
+              class="cell cell--dead"></td>`;
           })
           .join("")}</tr>`;
       })
       .join("");
 
-    const filedElement = getGameFieldElement(this.el);
-    filedElement.innerHTML = `<table>${table}</table>`;
-
-    if (this.cbCellClick) {
-      const cellChange: FieldCellChange = this.cbCellClick;
-      filedElement.addEventListener("click", (ev) => {
-        const target = ev.target as HTMLElement;
-        if (target.matches(".cell[data-y][data-x]")) {
-          const y = Number(target.getAttribute("data-y"));
-          const x = Number(target.getAttribute("data-x"));
-          cellChange(y, x);
-        }
-      });
-    }
+    getFieldTableElement(this.el).innerHTML = `<tbody>${tbody}</tbody>`;
   }
 
   public updateGameState(state: GameState): void {
-    this.gameState = state;
+    this.gameState = { ...state };
 
-    getElementSizeY(this.el).value = `${this.gameState.height}`;
+    const controlPanel = getControlPanelElement(this.el);
 
-    getElementSizeX(this.el).value = `${this.gameState.width}`;
-
-    getElementStepDuration(this.el).value = `${this.gameState.stepMs}`;
-
-    const buttonPlay = getElementTogglePlay(this.el);
+    const buttonPlay: HTMLElement = getTogglePlayElement(controlPanel);
     if (this.gameState.isPlaying) {
       buttonPlay.innerHTML = "Stop";
       buttonPlay.classList.add("run-button--playing");
@@ -237,6 +230,12 @@ export class GameWiew implements IGameView {
       buttonPlay.classList.add("run-button--stopped");
       buttonPlay.classList.remove("run-button--playing");
     }
+
+    getStepDurationElement(controlPanel).value = `${this.gameState.stepMs}`;
+
+    getSizeYElement(controlPanel).value = `${this.gameState.height}`;
+
+    getSizeXElement(controlPanel).value = `${this.gameState.width}`;
   }
 
   public onCellClick(cb: FieldCellChange): void {

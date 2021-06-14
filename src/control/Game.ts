@@ -19,8 +19,6 @@ export class Game {
     this.gameView = gameView;
     this.setStepDuration(stepDuration);
 
-    this.updateGameState();
-
     this.gameView.onFieldSizeChange((height: number, width: number) => {
       this.fieldSizeChange(height, width);
     });
@@ -36,6 +34,8 @@ export class Game {
     this.gameView.onStepDurationChange((newStep: number) => {
       this.setStepDuration(newStep);
     });
+
+    this.updateGameState();
   }
 
   private cellClick(row: number, col: number) {
