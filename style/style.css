@@ -22,12 +22,16 @@ table .cell {
   text-align: center;
 }
 
-.cell.cell--alive {
+.cell--alive {
   background-color: tomato;
 }
 
-.cell.cell--dead {
+.cell--dead {
   background-color: white;
+}
+
+.cell--weak {
+  background-color: lightsalmon;
 }
 
 input {

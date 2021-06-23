@@ -1,5 +1,6 @@
 const STATE_DEAD = 0;
 const STATE_ALIVE = 1;
+//const STATE_MUSTDIE = 2;
 
 type CellState = 0 | 1;
 

@@ -28,7 +28,6 @@ describe("gameView", () => {
       expect(gameView.onCellClick).toBeInstanceOf(Function);
       expect(gameView.onGameStateChange).toBeInstanceOf(Function);
       expect(gameView.onFieldSizeChange).toBeInstanceOf(Function);
-      expect(gameView.onStepDurationChange).toBeInstanceOf(Function);
     });
   });
 
@@ -38,7 +37,7 @@ describe("gameView", () => {
       gameView = new GameWiew(el);
     });
 
-    it("renders field from .updateGameField", () => {
+    it("renders field from .updateGameField when game stopped", () => {
       gameView.updateGameField([
         [0, 1],
         [1, 0],
@@ -46,6 +45,7 @@ describe("gameView", () => {
       expect(el.querySelectorAll(".cell").length).toBe(4);
       expect(el.querySelectorAll(".cell.cell--alive").length).toBe(2);
       expect(el.querySelectorAll(".cell.cell--dead").length).toBe(2);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
 
       gameView.updateGameField([
         [0, 0],
@@ -54,6 +54,7 @@ describe("gameView", () => {
       expect(el.querySelectorAll(".cell").length).toBe(4);
       expect(el.querySelectorAll(".cell.cell--alive").length).toBe(1);
       expect(el.querySelectorAll(".cell.cell--dead").length).toBe(3);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
 
       gameView.updateGameField([
         [0, 0, 1],
@@ -62,6 +63,76 @@ describe("gameView", () => {
       expect(el.querySelectorAll(".cell").length).toBe(6);
       expect(el.querySelectorAll(".cell.cell--alive").length).toBe(3);
       expect(el.querySelectorAll(".cell.cell--dead").length).toBe(3);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
+
+      gameView.updateGameField([
+        [1, 1, 1],
+        [1, 1, 1],
+      ]);
+      expect(el.querySelectorAll(".cell").length).toBe(6);
+      expect(el.querySelectorAll(".cell.cell--alive").length).toBe(6);
+      expect(el.querySelectorAll(".cell.cell--dead").length).toBe(0);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
+    });
+
+    it("renders field from .updateGameField when game started then paused", () => {
+      gameView.updateGameField([
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 1, 1],
+      ]);
+      expect(el.querySelectorAll(".cell").length).toBe(9);
+      expect(el.querySelectorAll(".cell.cell--alive").length).toBe(5);
+      expect(el.querySelectorAll(".cell.cell--dead").length).toBe(4);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
+
+      gameView.updateGameState({ isPlaying: true });
+
+      gameView.updateGameField([
+        [0, 0, 0],
+        [1, 1, 1],
+        [0, 1, 1],
+      ]);
+      expect(el.querySelectorAll(".cell").length).toBe(9);
+      expect(el.querySelectorAll(".cell.cell--alive").length).toBe(5);
+      expect(el.querySelectorAll(".cell.cell--dead").length).toBe(4);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(2);
+
+      gameView.updateGameState({ isPaused: true });
+
+      gameView.updateGameField([
+        [0, 0, 0],
+        [1, 0, 1],
+        [0, 1, 1],
+      ]);
+      expect(el.querySelectorAll(".cell").length).toBe(9);
+      expect(el.querySelectorAll(".cell.cell--alive").length).toBe(5);
+      expect(el.querySelectorAll(".cell.cell--dead").length).toBe(4);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(2);
+
+      gameView.updateGameState({ isPaused: false });
+
+      gameView.updateGameField([
+        [0, 0, 0],
+        [0, 1, 1],
+        [0, 1, 1],
+      ]);
+      expect(el.querySelectorAll(".cell").length).toBe(9);
+      expect(el.querySelectorAll(".cell.cell--alive").length).toBe(4);
+      expect(el.querySelectorAll(".cell.cell--dead").length).toBe(5);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(1);
+
+      gameView.updateGameState({ isPlaying: false });
+
+      gameView.updateGameField([
+        [0, 0, 0],
+        [0, 1, 1],
+        [0, 1, 1],
+      ]);
+      expect(el.querySelectorAll(".cell").length).toBe(9);
+      expect(el.querySelectorAll(".cell.cell--alive").length).toBe(4);
+      expect(el.querySelectorAll(".cell.cell--dead").length).toBe(5);
+      expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
     });
 
     it("calls function .onCellClick on field interaction", () => {
@@ -88,9 +159,8 @@ describe("gameView", () => {
 
     it("renders correct game state on .updateGameState", () => {
       gameView.updateGameState({
-        height: 1,
-        width: 0,
         isPlaying: false,
+        isPaused: false,
         stepMs: 1000,
       });
 
@@ -101,11 +171,23 @@ describe("gameView", () => {
         el.querySelector(".run-button.run-button--stopped")?.innerHTML
       ).toBe("Play");
 
+      expect(
+        el.querySelector("button.pause-button.pause-button--on")
+      ).toBeNull();
+      expect(
+        el.querySelector("button.pause-button.pause-button--off")
+      ).not.toBeNull();
+      expect(
+        el.querySelector(".pause-button.pause-button--off")?.innerHTML
+      ).toBe("Pause");
+
       const stepDuration: HTMLInputElement = el.querySelector(
-        "input.game-state.step-duration"
+        "input[type='range'].game-state.step-duration"
       ) as HTMLInputElement;
       expect(stepDuration).not.toBeNull();
       expect(Number(stepDuration.value)).toBe(1000);
+
+      gameView.updateFieldSize(1, 0);
 
       const inputHeight: HTMLInputElement = el.querySelector(
         "input[type='number'].field-size.field-size--height"
@@ -120,10 +202,9 @@ describe("gameView", () => {
       expect(Number(inputWidth.value)).toBe(0);
 
       gameView.updateGameState({
-        height: 3,
-        width: 4,
         isPlaying: true,
-        stepMs: 10,
+        isPaused: true,
+        stepMs: 300,
       });
 
       expect(el.querySelector(".run-button.run-button--stopped")).toBeNull();
@@ -134,35 +215,61 @@ describe("gameView", () => {
         el.querySelector(".run-button.run-button--playing")?.innerHTML
       ).toBe("Stop");
 
+      expect(
+        el.querySelector("button.pause-button.pause-button--off")
+      ).toBeNull();
+      expect(
+        el.querySelector("button.pause-button.pause-button--on")
+      ).not.toBeNull();
+      expect(
+        el.querySelector(".pause-button.pause-button--on")?.innerHTML
+      ).toBe("Continue");
+
+      expect(Number(stepDuration.value)).toBe(300);
+
+      gameView.updateFieldSize(3, 4);
       expect(Number(inputHeight.value)).toBe(3);
       expect(Number(inputWidth.value)).toBe(4);
-      expect(Number(stepDuration.value)).toBe(10);
     });
 
     it("calls function from .onGameStateChange on control interaction", () => {
       const onGameStateChange = jest.fn();
       gameView.onGameStateChange(onGameStateChange);
       gameView.updateGameState({
-        height: 2,
-        width: 3,
         isPlaying: true,
-        stepMs: 10,
+        isPaused: false,
       });
+
       el.querySelector(".run-button.run-button--playing")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange).toHaveBeenCalledWith(false);
+      expect(onGameStateChange).toHaveBeenCalledWith({ isPlaying: false });
+
+      el.querySelector(".pause-button.pause-button--off")?.dispatchEvent(
+        new Event("click", { bubbles: true })
+      );
+      expect(onGameStateChange.mock.calls[1][0]).toEqual({ isPaused: true });
+
+      el.querySelector(".pause-button.pause-button--off")?.dispatchEvent(
+        new Event("click", { bubbles: true })
+      );
+      expect(onGameStateChange.mock.calls[2][0]).toEqual({ isPaused: true });
 
       gameView.updateGameState({
-        height: 2,
-        width: 3,
+        isPaused: true,
+      });
+      el.querySelector(".pause-button.pause-button--on")?.dispatchEvent(
+        new Event("click", { bubbles: true })
+      );
+      expect(onGameStateChange.mock.calls[3][0]).toEqual({ isPaused: false });
+
+      gameView.updateGameState({
         isPlaying: false,
-        stepMs: 10,
       });
       el.querySelector(".run-button.run-button--stopped")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange.mock.calls[1][0]).toBe(true);
+      expect(onGameStateChange.mock.calls[4][0]).toEqual({ isPlaying: true });
     });
 
     it("calls .onFieldSizeChange on field size change interaction", () => {
@@ -191,20 +298,21 @@ describe("gameView", () => {
       });
     });
 
-    it("calls function from .onStepDurationChange on control interaction", () => {
+    it("calls function from .onGameStateChange on control Step Size interaction", () => {
       const inputStep: HTMLInputElement = el.querySelector(
-        "input[type='number'].game-state.step-duration"
+        "input[type='range'].game-state.step-duration"
       ) as HTMLInputElement;
 
-      const onStepDurationChange = jest.fn();
-      gameView.onStepDurationChange(onStepDurationChange);
+      const onGameStateChange = jest.fn();
+      gameView.onGameStateChange(onGameStateChange);
       inputStep.value = "100";
       inputStep?.dispatchEvent(new Event("change", { bubbles: true }));
-      expect(onStepDurationChange).toHaveBeenCalledWith(100);
+      expect(onGameStateChange).toHaveBeenCalledWith({ stepMs: 100 });
 
       inputStep.value = "5555";
       inputStep?.dispatchEvent(new Event("change", { bubbles: true }));
-      expect(onStepDurationChange.mock.calls[1][0]).toBe(5555);
+      // max = 2000
+      expect(onGameStateChange).toHaveBeenCalledWith({ stepMs: 2000 });
     });
   });
 });
