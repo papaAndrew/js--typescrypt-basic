@@ -2,102 +2,110 @@ import { IGameField } from "../model/GameField";
 import { GameState, IGameView } from "../view/GameView";
 import { CellState } from "../model/utils";
 
+const INITIAL_STATE: CellState[][] = [
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+];
+
 export class Game {
-  private isPlaying = false;
-
-  private stepDuration = 1000;
-
   private gameField: IGameField;
   private gameView: IGameView;
 
-  constructor(
-    gameField: IGameField,
-    gameView: IGameView,
-    stepDuration?: number
-  ) {
-    this.gameField = gameField;
+  private gameState: GameState = {
+    isPlaying: false,
+    isPaused: false,
+    stepMs: 1000,
+  };
+
+  //  private gameStatus: number = GS_STOPED;
+  private isPlaying = false;
+
+  constructor(gameField: IGameField, gameView: IGameView, stepMs = 1000) {
     this.gameView = gameView;
-    this.setStepDuration(stepDuration);
+    this.initGameView();
 
-    this.gameView.onFieldSizeChange((height: number, width: number) => {
-      this.fieldSizeChange(height, width);
-    });
+    this.gameField = gameField;
+    this.initGameField();
 
+    this.gameState.stepMs = stepMs;
+    this.gameView.updateGameState(this.gameState);
+    this.gameView.updateGameField(this.gameField.getState());
+  }
+
+  private initGameField() {
+    const [h, w] = [INITIAL_STATE.length, INITIAL_STATE[0]?.length || 0];
+    this.gameField.setSize(h, w);
+
+    for (let y = 0; y < h; y += 1) {
+      for (let x = 0; x < w; x += 1) {
+        if (INITIAL_STATE[y][x]) {
+          this.gameField.toggleCell(y, x);
+        }
+      }
+    }
+  }
+
+  private initGameView() {
     this.gameView.onCellClick((row: number, col: number) => {
       this.cellClick(row, col);
     });
 
-    this.gameView.onGameStateChange((newState: boolean) => {
+    this.gameView.onGameStateChange((newState: Partial<GameState>) => {
       this.gameStateChange(newState);
     });
 
-    this.gameView.onStepDurationChange((newStep: number) => {
-      this.setStepDuration(newStep);
+    this.gameView.onFieldSizeChange((height: number, width: number) => {
+      this.fieldSizeChange(height, width);
     });
-
-    this.updateGameState();
   }
 
   private cellClick(row: number, col: number) {
     this.gameField.toggleCell(row, col);
-    this.updateGameState();
+    this.gameView.updateGameField(this.gameField.getState());
   }
 
-  private gameStateChange(newState: boolean) {
-    if (newState) {
-      this.start();
-    } else {
-      this.stop();
+  private gameStateChange(state: Partial<GameState>) {
+    this.gameState = { ...this.gameState, ...state };
+    if (!this.gameState.isPlaying) {
+      this.gameState.isPaused = false;
     }
+
+    if (this.gameState.isPlaying && !this.gameState.isPaused) {
+      this.start();
+    }
+
+    this.gameView.updateGameState(this.gameState);
   }
 
-  private getGameState(fieldState: CellState[][]): GameState {
-    return {
-      height: fieldState.length,
-      width: fieldState[0].length,
-      isPlaying: this.isPlaying,
-      stepMs: this.stepDuration,
-    };
-  }
-
-  // интерактивное изменение размера поля
   private fieldSizeChange(height: number, width: number) {
     this.gameField.setSize(height, width);
-    this.updateGameState();
+    this.gameView.updateGameField(this.gameField.getState());
   }
 
-  private updateGameState() {
-    const fieldState: CellState[][] = this.gameField.getState();
-    const gameState: GameState = this.getGameState(fieldState);
-
-    this.gameView.updateGameState(gameState);
-    this.gameView.updateGameField(fieldState);
-  }
-
-  start(): void {
+  private start() {
+    if (this.isPlaying) {
+      return;
+    }
     this.isPlaying = true;
 
     const play = () => {
-      if (!this.isPlaying) {
+      if (!this.gameState.isPlaying || this.gameState.isPaused) {
+        this.isPlaying = false;
         return;
       }
 
-      this.gameField.nextGeneration();
-      this.updateGameState();
+      this.gameView.updateGameField(this.gameField.nextGeneration());
 
-      setTimeout(play, this.stepDuration);
+      setTimeout(play, this.gameState.stepMs);
     };
     play();
-  }
-
-  stop(): void {
-    this.isPlaying = false;
-    this.updateGameState();
-  }
-
-  setStepDuration(step: number | undefined): void {
-    if (step) {
-      this.stepDuration = step;
-    }
   }
 }

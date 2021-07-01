@@ -8,11 +8,10 @@ export type GameState = {
 
 export type FieldCellChange = (row: number, column: number) => void;
 export type GameStateChange = (newState: Partial<GameState>) => void;
-//export type StepDurationChange = (stepDurationMs: number) => void;
 
 export interface IGameView {
   updateGameField(cellStates: CellState[][]): void;
-  updateGameState(state: GameState): void;
+  updateGameState(state: Partial<GameState>): void;
   onCellClick(cb: FieldCellChange): void;
   onGameStateChange(cb: GameStateChange): void;
   onFieldSizeChange(cb: FieldCellChange): void;
@@ -133,11 +132,14 @@ export class GameWiew implements IGameView {
 
   private cbFieldSizeChange: FieldCellChange | undefined;
 
-  //private cbStepDurationChange: StepDurationChange | undefined;
-
   constructor(parentElement: HTMLElement) {
     this.el = parentElement;
     this.render();
+    this.updateGameState(this.gameState);
+  }
+
+  private getGameState(): GameState {
+    return this.gameState;
   }
 
   /**
@@ -151,44 +153,44 @@ export class GameWiew implements IGameView {
     const inputHeight: HTMLInputElement = getSizeYElement();
     inputHeight.addEventListener("change", (ev: Event) => {
       this.fieldHeight = Number((ev.target as HTMLInputElement).value);
-      if (this.cbFieldSizeChange) {
+      this.cbFieldSizeChange &&
         this.cbFieldSizeChange(this.fieldHeight, this.fieldWidth);
-      }
     });
     controlPanel.append(inputHeight);
 
     const inputWidth: HTMLInputElement = getSizeXElement();
     inputWidth.addEventListener("change", (ev: Event) => {
       this.fieldWidth = Number((ev.target as HTMLInputElement).value);
-      if (this.cbFieldSizeChange) {
+      this.cbFieldSizeChange &&
         this.cbFieldSizeChange(this.fieldHeight, this.fieldWidth);
-      }
     });
     controlPanel.append(inputWidth);
 
     const inputStep: HTMLInputElement = getStepDurationElement();
     inputStep.addEventListener("change", (ev: Event) => {
-      this.gameState.stepMs = Number((ev.target as HTMLInputElement).value);
-      if (this.cbGameStateChange) {
-        this.cbGameStateChange({ stepMs: this.gameState.stepMs });
-      }
+      this.cbGameStateChange &&
+        this.cbGameStateChange({
+          stepMs: Number((ev.target as HTMLInputElement).value),
+        });
     });
     controlPanel.append(inputStep);
 
     const buttonPlay: HTMLElement = getPlayElement();
     buttonPlay.addEventListener("click", () => {
-      if (this.cbGameStateChange) {
-        this.cbGameStateChange({ isPlaying: !this.gameState.isPlaying });
-      }
+      this.cbGameStateChange &&
+        this.cbGameStateChange({
+          isPlaying: !this.gameState.isPlaying,
+        });
     });
     controlPanel.append(buttonPlay);
     newEl.append(controlPanel);
 
     const buttonPause: HTMLElement = getPauseElement();
     buttonPause.addEventListener("click", () => {
-      if (this.cbGameStateChange) {
-        this.cbGameStateChange({ isPaused: !this.gameState.isPaused });
-      }
+      this.cbGameStateChange &&
+        this.cbGameStateChange({
+          isPaused: !this.gameState.isPaused,
+        });
     });
     controlPanel.append(buttonPause);
 
@@ -199,13 +201,11 @@ export class GameWiew implements IGameView {
 
     const fieldTable: HTMLTableElement = getFieldTableElement();
     fieldTable.addEventListener("click", (ev) => {
-      if (this.cbCellClick) {
-        const target: HTMLElement = ev.target as HTMLElement;
-        if (target.matches(".cell[data-y][data-x]")) {
-          const y = Number(target.getAttribute("data-y"));
-          const x = Number(target.getAttribute("data-x"));
-          this.cbCellClick(y, x);
-        }
+      const target: HTMLElement = ev.target as HTMLElement;
+      if (target.matches(".cell[data-y][data-x]")) {
+        const y = Number(target.getAttribute("data-y"));
+        const x = Number(target.getAttribute("data-x"));
+        this.cbCellClick && this.cbCellClick(y, x);
       }
     });
     gameFieldEl.appendChild(fieldTable);
@@ -221,14 +221,46 @@ export class GameWiew implements IGameView {
     return false;
   }
 
+  private checkStop(fieldState: CellState[][]) {
+    if (!this.gameState.isPlaying) {
+      return;
+    }
+
+    if (
+      fieldState.filter(
+        (line: CellState[], y) =>
+          line.filter((item, x) => item !== this.nextGeneration[y][x]).length >
+          0
+      ).length === 0
+    ) {
+      this.cbGameStateChange && this.cbGameStateChange({ isPlaying: false });
+    }
+  }
+
+  private updateFieldSize(fieldState: CellState[][]) {
+    this.fieldHeight = fieldState.length;
+    this.fieldWidth = fieldState[0]?.length || 0;
+
+    const controlPanel = getControlPanelElement(this.el);
+
+    getSizeYElement(controlPanel).value = `${this.fieldHeight}`;
+
+    getSizeXElement(controlPanel).value = `${this.fieldWidth}`;
+  }
+
   public updateGameField(fieldState: CellState[][]): void {
+    this.updateFieldSize(fieldState);
+
     let state = this.nextGeneration;
     this.nextGeneration = fieldState;
 
     if (this.gameState.isPaused) {
       return;
     }
-    if (!this.gameState.isPlaying) {
+
+    if (this.gameState.isPlaying) {
+      this.checkStop(state);
+    } else {
       state = fieldState;
     }
 
@@ -251,18 +283,8 @@ export class GameWiew implements IGameView {
     getFieldTableElement(this.el).innerHTML = `<tbody>${tbody}</tbody>`;
   }
 
-  public updateFieldSize(height: number, width: number) {
-    [this.fieldHeight, this.fieldWidth] = [height, width];
-
-    const controlPanel = getControlPanelElement(this.el);
-
-    getSizeYElement(controlPanel).value = `${this.fieldHeight}`;
-
-    getSizeXElement(controlPanel).value = `${this.fieldWidth}`;
-  }
-
-  public updateGameState(state: Partial<GameState>) {
-    this.gameState = { ...this.gameState, ...state };
+  public updateGameState(newState: Partial<GameState>): void {
+    this.gameState = { ...this.gameState, ...newState };
     const controlPanel = getControlPanelElement(this.el);
 
     getStepDurationElement(controlPanel).value = `${this.gameState.stepMs}`;
@@ -297,13 +319,7 @@ export class GameWiew implements IGameView {
   public onGameStateChange(cb: GameStateChange): void {
     this.cbGameStateChange = cb;
   }
-
   public onFieldSizeChange(cb: FieldCellChange): void {
     this.cbFieldSizeChange = cb;
   }
-  /*
-  public onStepDurationChange(cb: StepDurationChange): void {
-    this.cbStepDurationChange = cb;
-  }
-  */
 }

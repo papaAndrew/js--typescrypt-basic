@@ -39,6 +39,20 @@ export class GameField implements IGameField {
   }
 
   /**
+   * Задает новое состояние игровой матрицы
+   */
+  /* 
+  public setState(newState: CellState[][]) {
+    this.setSize(newState.length, newState[0]?.length || 0);
+    this.field = newState.map((line: CellState[], y: number) => {
+      line.map((state: CellState, x: number) => {...this.field[y][x], ...{ state: state} }
+
+      });      
+    });
+  }
+ */
+
+  /**
    * Задает/изменяет размер матрицы
    * @param y
    * @param x

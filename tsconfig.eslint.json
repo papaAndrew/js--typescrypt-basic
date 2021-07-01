@@ -3,7 +3,7 @@
   "include": [
     "babel.config.js",
     "webpack.config.js",
-    "dev.webpack.config.js",
+    "*.webpack.config.js",
     ".eslintrc.js",
     "src/",
     "tests/"

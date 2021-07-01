@@ -27,7 +27,7 @@ describe("gameView", () => {
       expect(gameView.updateGameState).toBeInstanceOf(Function);
       expect(gameView.onCellClick).toBeInstanceOf(Function);
       expect(gameView.onGameStateChange).toBeInstanceOf(Function);
-      expect(gameView.onFieldSizeChange).toBeInstanceOf(Function);
+      //expect(gameView.getGameState).toBeInstanceOf(Function);
     });
   });
 
@@ -135,6 +135,38 @@ describe("gameView", () => {
       expect(el.querySelectorAll(".cell.cell--weak").length).toBe(0);
     });
 
+    it("change field size", () => {
+      gameView.updateGameField([[]]);
+
+      const inputHeight: HTMLInputElement = el.querySelector(
+        "input[type='number'].field-size.field-size--height"
+      ) as HTMLInputElement;
+      expect(inputHeight).not.toBeNull();
+
+      const inputWidth: HTMLInputElement = el.querySelector(
+        "input[type='number'].field-size.field-size--width"
+      ) as HTMLInputElement;
+      expect(inputWidth).not.toBeNull();
+
+      expect(Number(inputHeight.value)).toBe(1);
+      expect(Number(inputWidth.value)).toBe(0);
+
+      gameView.updateGameField([
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ]);
+      expect(Number(inputHeight.value)).toBe(3);
+      expect(Number(inputWidth.value)).toBe(4);
+
+      gameView.updateGameField([
+        [0, 0],
+        [0, 0],
+      ]);
+      expect(Number(inputHeight.value)).toBe(2);
+      expect(Number(inputWidth.value)).toBe(2);
+    });
+
     it("calls function .onCellClick on field interaction", () => {
       const onCellClick = jest.fn();
       gameView.onCellClick(onCellClick);
@@ -187,20 +219,6 @@ describe("gameView", () => {
       expect(stepDuration).not.toBeNull();
       expect(Number(stepDuration.value)).toBe(1000);
 
-      gameView.updateFieldSize(1, 0);
-
-      const inputHeight: HTMLInputElement = el.querySelector(
-        "input[type='number'].field-size.field-size--height"
-      ) as HTMLInputElement;
-      expect(inputHeight).not.toBeNull();
-      expect(Number(inputHeight.value)).toBe(1);
-
-      const inputWidth: HTMLInputElement = el.querySelector(
-        "input[type='number'].field-size.field-size--width"
-      ) as HTMLInputElement;
-      expect(inputWidth).not.toBeNull();
-      expect(Number(inputWidth.value)).toBe(0);
-
       gameView.updateGameState({
         isPlaying: true,
         isPaused: true,
@@ -226,50 +244,50 @@ describe("gameView", () => {
       ).toBe("Continue");
 
       expect(Number(stepDuration.value)).toBe(300);
-
-      gameView.updateFieldSize(3, 4);
-      expect(Number(inputHeight.value)).toBe(3);
-      expect(Number(inputWidth.value)).toBe(4);
     });
 
     it("calls function from .onGameStateChange on control interaction", () => {
       const onGameStateChange = jest.fn();
       gameView.onGameStateChange(onGameStateChange);
-      gameView.updateGameState({
-        isPlaying: true,
-        isPaused: false,
-      });
+
+      el.querySelector(".run-button.run-button--stopped")?.dispatchEvent(
+        new Event("click", { bubbles: true })
+      );
+      expect(onGameStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isPlaying: true,
+        })
+      );
+
+      gameView.updateGameState({ isPlaying: true });
+      el.querySelector(".pause-button.pause-button--off")?.dispatchEvent(
+        new Event("click", { bubbles: true })
+      );
+      expect(onGameStateChange.mock.calls[1][0]).toEqual(
+        expect.objectContaining({
+          isPaused: true,
+        })
+      );
+
+      gameView.updateGameState({ isPaused: true });
+
+      el.querySelector(".pause-button.pause-button--on")?.dispatchEvent(
+        new Event("click", { bubbles: true })
+      );
+      expect(onGameStateChange.mock.calls[2][0]).toEqual(
+        expect.objectContaining({
+          isPaused: false,
+        })
+      );
 
       el.querySelector(".run-button.run-button--playing")?.dispatchEvent(
         new Event("click", { bubbles: true })
       );
-      expect(onGameStateChange).toHaveBeenCalledWith({ isPlaying: false });
-
-      el.querySelector(".pause-button.pause-button--off")?.dispatchEvent(
-        new Event("click", { bubbles: true })
+      expect(onGameStateChange.mock.calls[3][0]).toEqual(
+        expect.objectContaining({
+          isPlaying: false,
+        })
       );
-      expect(onGameStateChange.mock.calls[1][0]).toEqual({ isPaused: true });
-
-      el.querySelector(".pause-button.pause-button--off")?.dispatchEvent(
-        new Event("click", { bubbles: true })
-      );
-      expect(onGameStateChange.mock.calls[2][0]).toEqual({ isPaused: true });
-
-      gameView.updateGameState({
-        isPaused: true,
-      });
-      el.querySelector(".pause-button.pause-button--on")?.dispatchEvent(
-        new Event("click", { bubbles: true })
-      );
-      expect(onGameStateChange.mock.calls[3][0]).toEqual({ isPaused: false });
-
-      gameView.updateGameState({
-        isPlaying: false,
-      });
-      el.querySelector(".run-button.run-button--stopped")?.dispatchEvent(
-        new Event("click", { bubbles: true })
-      );
-      expect(onGameStateChange.mock.calls[4][0]).toEqual({ isPlaying: true });
     });
 
     it("calls .onFieldSizeChange on field size change interaction", () => {
