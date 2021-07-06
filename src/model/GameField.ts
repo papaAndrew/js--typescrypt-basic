@@ -1,23 +1,29 @@
 import {
-  Cell,
   CellState,
   getMatrix,
   toggleCellState,
   getNextGeneration,
+  getSamrtState,
+  STATE_DEAD,
 } from "./utils";
 
 export interface IGameField {
-  getState(): CellState[][];
+  getState(smartMode?: boolean): CellState[][];
   toggleCell(y: number, x: number): void;
-  nextGeneration(): CellState[][];
+  nextGeneration(smartMode?: boolean): CellState[][];
   setSize(height: number, width: number): void;
+  clear(): CellState[][];
+  isGameOver(): boolean;
+  applyTemplate(mapState: number[][]): void;
 }
 
 export class GameField implements IGameField {
   /**
    * Игровая двумерная матрица
    */
-  private field: Cell[][] = [];
+  private fieldState: CellState[][] = [];
+
+  private nextState: CellState[][] = [];
 
   /**
    * создает пустую матрицу элементов Cell размером height * width
@@ -28,52 +34,55 @@ export class GameField implements IGameField {
     this.setSize(height, width || 0);
   }
 
+  private updateNextState() {
+    this.nextState = getNextGeneration(this.fieldState);
+  }
+
+  private getSamrtState(): CellState[][] {
+    return this.fieldState.map((line: CellState[], y: number) =>
+      line.map((cellState: CellState, x: number) =>
+        getSamrtState(cellState, this.nextState[y][x] || STATE_DEAD)
+      )
+    );
+  }
   /**
    * Текущее состояние игровой матрицы
    * @returns матрица состояний
    */
-  public getState(): CellState[][] {
-    return this.field.map((line: Cell[]) =>
-      line.map((cell: Cell) => cell.state)
-    );
+  public getState(smartMode?: boolean): CellState[][] {
+    return smartMode || false ? this.getSamrtState() : this.fieldState;
   }
 
   /**
-   * Задает новое состояние игровой матрицы
+   * Очистка игровоего поля от живых клеток
    */
-  /* 
-  public setState(newState: CellState[][]) {
-    this.setSize(newState.length, newState[0]?.length || 0);
-    this.field = newState.map((line: CellState[], y: number) => {
-      line.map((state: CellState, x: number) => {...this.field[y][x], ...{ state: state} }
+  public clear(): CellState[][] {
+    const height = this.fieldState.length;
+    const width = this.fieldState[0].length;
 
-      });      
-    });
+    this.fieldState = getMatrix(height, width);
+    this.updateNextState();
+    return this.getState();
   }
- */
-
   /**
    * Задает/изменяет размер матрицы
    * @param y
    * @param x
    */
   public setSize(h: number, w: number): void {
-    const currentField: Cell[][] = this.field;
-    const newField = getMatrix(h, w);
-
-    if (currentField.length) {
-      this.field = newField.map((line: Cell[], y: number) =>
-        currentField[y]
-          ? line.map((cell: Cell, x: number) =>
-              currentField[y][x]
-                ? Object.assign(cell, currentField[y][x])
-                : cell
-            )
-          : line
-      );
-    } else {
-      this.field = newField;
-    }
+    const newField: CellState[][] = getMatrix(
+      h,
+      w
+    ).map((line: CellState[], y: number) =>
+      this.fieldState[y]
+        ? line.map(
+            (cellState: CellState, x: number) =>
+              this.fieldState[y][x] || cellState
+          )
+        : line
+    );
+    this.fieldState = newField;
+    this.updateNextState();
   }
 
   /**
@@ -82,28 +91,35 @@ export class GameField implements IGameField {
    * @param x
    */
   public toggleCell(y: number, x: number): void {
-    this.field[y][x].state = toggleCellState(this.field[y][x]);
+    this.fieldState[y][x] = toggleCellState(this.fieldState[y][x]);
+    this.updateNextState();
   }
 
   /**
    * рассчитывает и устанавливает следующее состояние поля
    */
-  public nextGeneration(): CellState[][] {
-    this.field = getNextGeneration(this.field);
+  public nextGeneration(smartMode?: boolean): CellState[][] {
+    this.fieldState = this.nextState;
+    this.updateNextState();
 
-    return this.getState();
+    return this.getState(smartMode);
   }
 
-  public isAnyoneAlive(): boolean {
-    for (let i = 0; i < this.field.length; i += 1) {
-      const range = this.field[i];
-      for (let j = 0; j < range.length; j += 1) {
-        const cell = range[j];
-        if (cell.state) {
-          return true;
-        }
-      }
-    }
-    return false;
+  public isGameOver(): boolean {
+    return (
+      this.fieldState.filter(
+        (line: CellState[], y) =>
+          line.filter(
+            (cellState: CellState, x) => cellState !== this.nextState[y][x]
+          ).length > 0
+      ).length === 0
+    );
+  }
+
+  public applyTemplate(mapState: number[][]): void {
+    this.fieldState = mapState.map((line: number[]) =>
+      line.map((state: number) => state as CellState)
+    );
+    this.updateNextState();
   }
 }

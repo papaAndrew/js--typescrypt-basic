@@ -1,26 +1,9 @@
-const STATE_DEAD = 0;
-const STATE_ALIVE = 1;
-//const STATE_MUSTDIE = 2;
+export const STATE_DEAD = 0;
+export const STATE_ALIVE = 1;
+export const STATE_RAISE = 2;
+export const STATE_WEAK = 3;
 
-type CellState = 0 | 1;
-
-type Cell = {
-  row: number;
-  col: number;
-  state: CellState;
-};
-
-function getNewCell(y: number, x: number): Cell {
-  return {
-    row: y,
-    col: x,
-    state: STATE_DEAD,
-  };
-}
-
-function getNewRow(row: number, width: number): Cell[] {
-  return new Array(width).fill({}).map((item, col) => getNewCell(row, col));
-}
+export type CellState = 0 | 1 | 2 | 3;
 
 /**
  * Create matrix with specified size
@@ -28,26 +11,24 @@ function getNewRow(row: number, width: number): Cell[] {
  * @param width
  * @returns
  */
-function getMatrix(height: number, width: number): Cell[][] {
-  return new Array(height).fill([]).map((item, row) => getNewRow(row, width));
+export function getMatrix(height: number, width: number): CellState[][] {
+  return new Array(height)
+    .fill([])
+    .map((item) => new Array(width).fill(STATE_DEAD));
 }
 
-function isCellAlive(cell: Cell | undefined): boolean {
-  if (cell) {
-    return cell.state === STATE_ALIVE;
-  }
-  return false;
-}
-
-function countAliveNeighbors(gameField: Cell[][], atCell: Cell): number {
+export function countAliveNeighbors(
+  gameField: CellState[][],
+  row: number,
+  col: number
+): number {
   let ret = 0;
 
-  for (let y: number = atCell.row - 1; y <= atCell.row + 1; y += 1) {
-    const range: Cell[] | undefined = gameField[y];
+  for (let y = row - 1; y <= row + 1; y += 1) {
+    const range = gameField[y];
     if (range) {
-      for (let x: number = atCell.col - 1; x <= atCell.col + 1; x += 1) {
-        const cell: Cell | undefined = range[x];
-        if (isCellAlive(cell) && cell !== atCell) {
+      for (let x = col - 1; x <= col + 1; x += 1) {
+        if (!(y === row && x === col) && range[x] === STATE_ALIVE) {
           ret += 1;
         }
       }
@@ -56,9 +37,14 @@ function countAliveNeighbors(gameField: Cell[][], atCell: Cell): number {
   return ret;
 }
 
-function getNextCellState(gameField: Cell[][], atCell: Cell): CellState {
-  const lives: number = countAliveNeighbors(gameField, atCell);
-  if (isCellAlive(atCell)) {
+function getNextCellState(
+  fieldState: CellState[][],
+  row: number,
+  col: number
+): CellState {
+  const lives: number = countAliveNeighbors(fieldState, row, col);
+
+  if (fieldState[row][col]) {
     return lives === 2 || lives === 3 ? STATE_ALIVE : STATE_DEAD;
   } else {
     return lives === 3 ? STATE_ALIVE : STATE_DEAD;
@@ -70,13 +56,11 @@ function getNextCellState(gameField: Cell[][], atCell: Cell): CellState {
  * @param matrix
  * @returns
  */
-function getNextGeneration(gameFiled: Cell[][]): Cell[][] {
-  return gameFiled.map((lines: Cell[]) =>
-    lines.map((cell: Cell) => {
-      const ret: Cell = Object.assign({}, cell);
-      ret.state = getNextCellState(gameFiled, cell);
-      return ret;
-    })
+export function getNextGeneration(fieldState: CellState[][]): CellState[][] {
+  return fieldState.map((lines: CellState[], y: number) =>
+    lines.map((cellState: CellState, x: number) =>
+      getNextCellState(fieldState, y, x)
+    )
   );
 }
 
@@ -85,17 +69,21 @@ function getNextGeneration(gameFiled: Cell[][]): Cell[][] {
  * @param {Cell} at cell to toggle state
  * @returns {CellState  cell with new state
  */
-function toggleCellState(cell: Cell): CellState {
-  return cell.state === STATE_DEAD ? STATE_ALIVE : STATE_DEAD;
+export function toggleCellState(cellState: CellState): CellState {
+  return cellState === STATE_ALIVE || cellState === STATE_WEAK
+    ? STATE_DEAD
+    : STATE_ALIVE;
 }
 
-export {
-  CellState,
-  Cell,
-  STATE_DEAD,
-  STATE_ALIVE,
-  getMatrix,
-  toggleCellState,
-  countAliveNeighbors,
-  getNextGeneration,
-};
+export function getSamrtState(
+  cellState: CellState,
+  nextState: CellState
+): CellState {
+  if (cellState == STATE_DEAD && nextState === STATE_ALIVE) {
+    return STATE_RAISE;
+  } else if (cellState == STATE_ALIVE && nextState === STATE_DEAD) {
+    return STATE_WEAK;
+  } else {
+    return cellState;
+  }
+}

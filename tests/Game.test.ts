@@ -8,19 +8,33 @@ const sleep = (x: number) => new Promise((res) => setTimeout(res, x));
 describe("Game", () => {
   const stepDuration = 100;
 
-  let state: CellState[][];
   let gameField: IGameField;
   let gameView: IGameView;
+
+  let isGameOver = false;
+
+  let fieldState: CellState[][];
+  const gameState: GameState = {
+    isPlaying: false,
+    smartMode: true,
+    gameOver: false,
+    clearField: false,
+    stepMs: stepDuration,
+    caption: "",
+  };
 
   let onGameStateChange = jest.fn();
   let onFieldSizeChange = jest.fn();
   let onCellClick = jest.fn();
 
   const getGameField = (): IGameField => ({
-    getState: jest.fn(() => state),
+    getState: jest.fn(() => fieldState),
     toggleCell: jest.fn(),
-    nextGeneration: jest.fn(),
+    nextGeneration: jest.fn(() => fieldState),
     setSize: jest.fn(),
+    clear: jest.fn(),
+    isGameOver: jest.fn(() => isGameOver),
+    applyTemplate: jest.fn(),
   });
 
   const getGameView = (): IGameView => ({
@@ -38,7 +52,7 @@ describe("Game", () => {
   });
 
   beforeEach(() => {
-    state = [
+    fieldState = [
       [Math.random() as CellState, Math.random() as CellState],
       [Math.random() as CellState, Math.random() as CellState],
       [Math.random() as CellState, Math.random() as CellState],
@@ -59,38 +73,35 @@ describe("Game", () => {
     });
 
     it("renders initial state on instantiating", () => {
-      const gameState: GameState = {
-        isPlaying: false,
-        isPaused: false,
-        stepMs: stepDuration,
-      };
-
       expect(gameField.getState).toBeCalled();
-      expect(gameView.updateGameField).toBeCalledWith(state);
+      expect(gameView.updateGameField).toBeCalledWith(fieldState);
       expect(gameView.updateGameState).toBeCalledWith(gameState);
     });
 
-    it("calls field.toggleCellState on view.cellClick and renders with updated state", () => {
-      state = [[0, 0, 0]];
-      onCellClick(0, 1);
+    it("interaction view.onCellClick raises field.toggleCellState and renders with updated state", () => {
+      expect(gameField.toggleCell).toHaveBeenCalledTimes(0);
 
-      expect(gameField.toggleCell).toHaveBeenCalledWith(0, 1);
-      expect(gameView.updateGameField).toHaveBeenCalledWith(state);
+      onCellClick(0, 0);
+      expect(gameField.toggleCell).toHaveBeenCalledWith(0, 0);
+      expect(gameView.updateGameField).toHaveBeenCalled();
     });
 
-    it("calls field.setSize on view.onFieldSizeChange and renders with updated state", () => {
-      state = [
-        [1, 0, 1],
-        [1, 0, 1],
-        [1, 0, 1],
-      ];
-      const height = state.length;
-      const width = state[0].length;
+    it("interaction view.onFieldSizeChange raises field.setSize() and renders with updated state", () => {
+      expect(gameField.setSize).toHaveBeenCalledTimes(1);
+      expect(gameField.setSize).toHaveBeenCalledWith(1, 0);
 
-      onFieldSizeChange(height, width);
+      onFieldSizeChange(11, 12);
+      expect(gameField.setSize).toHaveBeenCalledWith(11, 12);
+      expect(gameView.updateGameField).toHaveBeenCalled();
+    });
 
-      expect(gameField.setSize).toHaveBeenCalledWith(height, width);
-      expect(gameView.updateGameField).toHaveBeenCalledWith(state);
+    it("interaction view.clearField raises field.clear() and renders updated game field", () => {
+      expect(gameField.clear).not.toHaveBeenCalled();
+
+      onGameStateChange({ clearField: true });
+
+      expect(gameField.clear).toHaveBeenCalled();
+      expect(gameView.updateGameField).toHaveBeenCalled();
     });
 
     it("is able to start/stop game with onGameStateChange", async () => {
@@ -185,68 +196,6 @@ describe("Game", () => {
       expect(gameView.updateGameState).toHaveBeenCalledTimes(5);
     });
 
-    it("is able to pause/contunue game with onGameStateChange", async () => {
-      onGameStateChange({ isPlaying: true });
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(1);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(2);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(2);
-
-      await sleep(stepDuration);
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(2);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(3);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(2);
-
-      onGameStateChange({ isPaused: true });
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(2);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(3);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(3);
-
-      await sleep(stepDuration);
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(2);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(3);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(3);
-
-      onGameStateChange({ isPaused: false });
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(3);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(4);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(4);
-
-      await sleep(stepDuration);
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(4);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(5);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(4);
-
-      onGameStateChange({ isPaused: true });
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(4);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(5);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(5);
-
-      await sleep(stepDuration);
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(4);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(5);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(5);
-
-      onGameStateChange({ isPlaying: false });
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(4);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(5);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(6);
-
-      await sleep(stepDuration);
-
-      expect(gameField.nextGeneration).toHaveBeenCalledTimes(4);
-      expect(gameView.updateGameField).toHaveBeenCalledTimes(5);
-      expect(gameView.updateGameState).toHaveBeenCalledTimes(6);
-    });
-
     it("can change game speed if stepMs changed", async () => {
       expect(gameField.nextGeneration).toHaveBeenCalledTimes(0);
       expect(gameView.updateGameState).toHaveBeenCalledTimes(1);
@@ -291,6 +240,30 @@ describe("Game", () => {
       await sleep(200);
       expect(gameField.nextGeneration).toHaveBeenCalledTimes(5);
       expect(gameView.updateGameState).toHaveBeenCalledTimes(3);
+    });
+
+    it("stop the game and send caption if gameField.isGameOver()", async () => {
+      onGameStateChange({
+        isPlaying: true,
+        stepMs: 100,
+      });
+
+      expect(gameView.updateGameState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isPlaying: true,
+          caption: "",
+        })
+      );
+
+      isGameOver = true;
+      await sleep(100);
+
+      expect(gameView.updateGameState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isPlaying: false,
+          caption: "Game over!",
+        })
+      );
     });
   });
 });

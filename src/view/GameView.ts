@@ -1,17 +1,25 @@
-import { CellState, STATE_DEAD } from "../model/utils";
+import { CellState, STATE_ALIVE, STATE_WEAK } from "../model/utils";
 
 export type GameState = {
   isPlaying: boolean;
-  isPaused: boolean;
+  smartMode: boolean;
+  gameOver: boolean;
+  clearField: boolean;
   stepMs: number;
+  caption: string;
 };
+
+/**
+ * Message IDs for NotificationEvent.
+ */
+//export const AC_CLEAR_FIELD = 1;
 
 export type FieldCellChange = (row: number, column: number) => void;
 export type GameStateChange = (newState: Partial<GameState>) => void;
 
 export interface IGameView {
   updateGameField(cellStates: CellState[][]): void;
-  updateGameState(state: Partial<GameState>): void;
+  updateGameState(state: GameState): void;
   onCellClick(cb: FieldCellChange): void;
   onGameStateChange(cb: GameStateChange): void;
   onFieldSizeChange(cb: FieldCellChange): void;
@@ -72,13 +80,21 @@ function getPlayElement(el?: HTMLElement): HTMLButtonElement {
     return button;
   }
 }
-
-function getPauseElement(el?: HTMLElement): HTMLButtonElement {
+function getMsgBoxElement(el?: HTMLElement): HTMLDivElement {
   if (el) {
-    return el.querySelector("button.pause-button") as HTMLButtonElement;
+    return el.querySelector("div.msg-box") as HTMLDivElement;
+  } else {
+    const div: HTMLDivElement = document.createElement("div");
+    div.classList.add("msg-box");
+    return div;
+  }
+}
+function getClearElement(el?: HTMLElement): HTMLButtonElement {
+  if (el) {
+    return el.querySelector("button.clear-button") as HTMLButtonElement;
   } else {
     const button: HTMLButtonElement = document.createElement("button");
-    button.classList.add("pause-button");
+    button.classList.add("clear-button");
     return button;
   }
 }
@@ -118,14 +134,12 @@ export class GameWiew implements IGameView {
   private fieldHeight = 1;
   private fieldWidth = 0;
 
-  private gameState: GameState = {
+  /*   private gameState: GameState = {
     isPlaying: false,
     isPaused: false,
     stepMs: 1000,
   };
-
-  private nextGeneration: CellState[][] = [];
-
+ */
   private cbCellClick: FieldCellChange | undefined;
 
   private cbGameStateChange: GameStateChange | undefined;
@@ -135,11 +149,7 @@ export class GameWiew implements IGameView {
   constructor(parentElement: HTMLElement) {
     this.el = parentElement;
     this.render();
-    this.updateGameState(this.gameState);
-  }
-
-  private getGameState(): GameState {
-    return this.gameState;
+    //this.updateGameState(this.gameState);
   }
 
   /**
@@ -179,20 +189,23 @@ export class GameWiew implements IGameView {
     buttonPlay.addEventListener("click", () => {
       this.cbGameStateChange &&
         this.cbGameStateChange({
-          isPlaying: !this.gameState.isPlaying,
+          isPlaying: true,
         });
     });
     controlPanel.append(buttonPlay);
-    newEl.append(controlPanel);
 
-    const buttonPause: HTMLElement = getPauseElement();
-    buttonPause.addEventListener("click", () => {
+    const buttonClear: HTMLElement = getClearElement();
+    buttonClear.addEventListener("click", () => {
       this.cbGameStateChange &&
         this.cbGameStateChange({
-          isPaused: !this.gameState.isPaused,
+          clearField: true,
         });
     });
-    controlPanel.append(buttonPause);
+    buttonClear.innerHTML = "Clear";
+    controlPanel.append(buttonClear);
+
+    const msgBox: HTMLElement = getMsgBoxElement();
+    controlPanel.append(msgBox);
 
     newEl.append(controlPanel);
 
@@ -214,29 +227,6 @@ export class GameWiew implements IGameView {
     this.el = newEl;
   }
 
-  private isCellWeak(y: number, x: number): boolean {
-    if (y < this.nextGeneration.length && x < this.nextGeneration[y].length) {
-      return this.nextGeneration[y][x] === STATE_DEAD;
-    }
-    return false;
-  }
-
-  private checkStop(fieldState: CellState[][]) {
-    if (!this.gameState.isPlaying) {
-      return;
-    }
-
-    if (
-      fieldState.filter(
-        (line: CellState[], y) =>
-          line.filter((item, x) => item !== this.nextGeneration[y][x]).length >
-          0
-      ).length === 0
-    ) {
-      this.cbGameStateChange && this.cbGameStateChange({ isPlaying: false });
-    }
-  }
-
   private updateFieldSize(fieldState: CellState[][]) {
     this.fieldHeight = fieldState.length;
     this.fieldWidth = fieldState[0]?.length || 0;
@@ -251,29 +241,17 @@ export class GameWiew implements IGameView {
   public updateGameField(fieldState: CellState[][]): void {
     this.updateFieldSize(fieldState);
 
-    let state = this.nextGeneration;
-    this.nextGeneration = fieldState;
-
-    if (this.gameState.isPaused) {
-      return;
-    }
-
-    if (this.gameState.isPlaying) {
-      this.checkStop(state);
-    } else {
-      state = fieldState;
-    }
-
-    const tbody: string = state
+    const tbody: string = fieldState
       .map((range: CellState[], y: number) => {
         return `<tr>${range
           .map((state: CellState, x: number) => {
-            if (state === STATE_DEAD) {
-              return `<td data-y=${y} data-x=${x} class="cell cell--dead"></td>`;
-            } else if (this.isCellWeak(y, x)) {
-              return `<td data-y=${y} data-x=${x} class="cell cell--alive cell--weak">&#10042;</td>`;
-            } else {
-              return `<td data-y=${y} data-x=${x} class="cell cell--alive">&#10059;</td>`;
+            switch (state) {
+              case STATE_ALIVE:
+                return `<td data-y=${y} data-x=${x} class="cell cell--alive">&#10059;</td>`;
+              case STATE_WEAK:
+                return `<td data-y=${y} data-x=${x} class="cell cell--alive cell--weak">&#10042;</td>`;
+              default:
+                return `<td data-y=${y} data-x=${x} class="cell cell--dead"></td>`;
             }
           })
           .join("")}</tr>`;
@@ -283,32 +261,44 @@ export class GameWiew implements IGameView {
     getFieldTableElement(this.el).innerHTML = `<tbody>${tbody}</tbody>`;
   }
 
-  public updateGameState(newState: Partial<GameState>): void {
-    this.gameState = { ...this.gameState, ...newState };
+  private setGameSpeed(stepMs: number) {
+    if (stepMs <= 0) {
+      return;
+    }
+
     const controlPanel = getControlPanelElement(this.el);
-
-    getStepDurationElement(controlPanel).value = `${this.gameState.stepMs}`;
-
+    getStepDurationElement(controlPanel).value = `${stepMs}`;
+  }
+  private setIsPlaying(isPlaying: boolean) {
+    const controlPanel = getControlPanelElement(this.el);
     const buttonPlay: HTMLElement = getPlayElement(controlPanel);
-    if (this.gameState.isPlaying) {
+
+    if (isPlaying) {
       buttonPlay.innerHTML = "Stop";
       buttonPlay.classList.add("run-button--playing");
       buttonPlay.classList.remove("run-button--stopped");
+
+      //console.log("buttonPlay", buttonPlay.innerHTML);
     } else {
       buttonPlay.innerHTML = "Play";
       buttonPlay.classList.add("run-button--stopped");
       buttonPlay.classList.remove("run-button--playing");
     }
+  }
+  private setCaption(caption: string) {
+    const controlPanel = getControlPanelElement(this.el);
+    getMsgBoxElement(controlPanel).innerHTML = caption;
+  }
 
-    const buttonPause: HTMLElement = getPauseElement(controlPanel);
-    if (this.gameState.isPaused) {
-      buttonPause.innerHTML = "Continue";
-      buttonPause.classList.add("pause-button--on");
-      buttonPause.classList.remove("pause-button--off");
-    } else {
-      buttonPause.innerHTML = "Pause";
-      buttonPause.classList.add("pause-button--off");
-      buttonPause.classList.remove("pause-button--on");
+  public updateGameState(gameState: Partial<GameState>): void {
+    if ("stepMs" in gameState) {
+      this.setGameSpeed(gameState.stepMs || 0);
+    }
+    if ("isPlaying" in gameState) {
+      this.setIsPlaying(gameState.isPlaying || false);
+    }
+    if ("caption" in gameState) {
+      this.setCaption(gameState.caption || "");
     }
   }
 

@@ -1,19 +1,5 @@
 import { IGameField } from "../model/GameField";
 import { GameState, IGameView } from "../view/GameView";
-import { CellState } from "../model/utils";
-
-const INITIAL_STATE: CellState[][] = [
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-];
 
 export class Game {
   private gameField: IGameField;
@@ -21,65 +7,106 @@ export class Game {
 
   private gameState: GameState = {
     isPlaying: false,
-    isPaused: false,
+    smartMode: true,
+    gameOver: false,
+    clearField: false,
     stepMs: 1000,
+    caption: "",
   };
 
-  //  private gameStatus: number = GS_STOPED;
-  private isPlaying = false;
-
-  constructor(gameField: IGameField, gameView: IGameView, stepMs = 1000) {
+  constructor(gameField: IGameField, gameView: IGameView, stepMs?: number) {
     this.gameView = gameView;
     this.initGameView();
 
     this.gameField = gameField;
     this.initGameField();
 
-    this.gameState.stepMs = stepMs;
+    this.gameState.stepMs = stepMs || 1000;
+
     this.gameView.updateGameState(this.gameState);
-    this.gameView.updateGameField(this.gameField.getState());
+    this.gameView.updateGameField(
+      this.gameField.getState(this.gameState.smartMode)
+    );
   }
 
   private initGameField() {
-    const [h, w] = [INITIAL_STATE.length, INITIAL_STATE[0]?.length || 0];
-    this.gameField.setSize(h, w);
-
-    for (let y = 0; y < h; y += 1) {
-      for (let x = 0; x < w; x += 1) {
-        if (INITIAL_STATE[y][x]) {
-          this.gameField.toggleCell(y, x);
-        }
-      }
-    }
+    this.gameField.setSize(1, 0);
   }
 
   private initGameView() {
-    this.gameView.onCellClick((row: number, col: number) => {
-      this.cellClick(row, col);
-    });
+    // listeners must be row function only.
+    this.gameView.onCellClick((row, col) => this.cellClick(row, col));
 
-    this.gameView.onGameStateChange((newState: Partial<GameState>) => {
-      this.gameStateChange(newState);
-    });
+    this.gameView.onGameStateChange((gameState) =>
+      this.gameStateChange(gameState)
+    );
 
-    this.gameView.onFieldSizeChange((height: number, width: number) => {
-      this.fieldSizeChange(height, width);
-    });
+    this.gameView.onFieldSizeChange((height, width) =>
+      this.fieldSizeChange(height, width)
+    );
   }
 
   private cellClick(row: number, col: number) {
     this.gameField.toggleCell(row, col);
-    this.gameView.updateGameField(this.gameField.getState());
+    this.gameView.updateGameField(
+      this.gameField.getState(this.gameState.smartMode)
+    );
+    this.gameStateChange({ gameOver: this.gameField.isGameOver() });
   }
 
-  private gameStateChange(state: Partial<GameState>) {
-    this.gameState = { ...this.gameState, ...state };
-    if (!this.gameState.isPlaying) {
-      this.gameState.isPaused = false;
+  private toggleIsPlaying() {
+    if (this.gameState.isPlaying) {
+      this.gameState.isPlaying = !this.gameState.isPlaying;
+      return;
+    }
+    this.start();
+  }
+
+  private setGameSpeed(newValue: number) {
+    this.gameState.stepMs = newValue;
+  }
+  private setGameOver(gameOver: boolean) {
+    this.gameState.gameOver = gameOver;
+
+    if (this.gameState.gameOver) {
+      this.gameState.isPlaying = false;
+      this.gameState.caption = "Game over!";
+    }
+  }
+
+  private setClearField(clearField: boolean) {
+    this.gameState.clearField = clearField;
+    if (!this.gameState.clearField) {
+      return;
     }
 
-    if (this.gameState.isPlaying && !this.gameState.isPaused) {
-      this.start();
+    if (this.gameState.isPlaying) {
+      this.gameState.isPlaying = false;
+      this.gameState.caption = "To clear field press Clear again please";
+    } else {
+      this.gameView.updateGameField(this.gameField.clear());
+    }
+  }
+
+  private gameStateChange(gameState: Partial<GameState>) {
+    this.gameState = {
+      ...this.gameState,
+      gameOver: false,
+      clearField: false,
+      caption: "",
+    };
+
+    if ("isPlaying" in gameState) {
+      this.toggleIsPlaying();
+    }
+    if ("stepMs" in gameState) {
+      this.setGameSpeed(gameState.stepMs || 0);
+    }
+    if ("gameOver" in gameState) {
+      this.setGameOver(gameState.gameOver || false);
+    }
+    if ("clearField" in gameState) {
+      this.setClearField(gameState.clearField || false);
     }
 
     this.gameView.updateGameState(this.gameState);
@@ -87,25 +114,38 @@ export class Game {
 
   private fieldSizeChange(height: number, width: number) {
     this.gameField.setSize(height, width);
-    this.gameView.updateGameField(this.gameField.getState());
+    this.gameView.updateGameField(
+      this.gameField.getState(this.gameState.smartMode)
+    );
+    this.gameStateChange({ gameOver: this.gameField.isGameOver() });
   }
 
   private start() {
-    if (this.isPlaying) {
+    if (this.gameState.isPlaying) {
       return;
     }
-    this.isPlaying = true;
+    this.gameState.isPlaying = true;
 
     const play = () => {
-      if (!this.gameState.isPlaying || this.gameState.isPaused) {
-        this.isPlaying = false;
+      if (!this.gameState.isPlaying) {
         return;
       }
-
-      this.gameView.updateGameField(this.gameField.nextGeneration());
+      this.gameView.updateGameField(
+        this.gameField.nextGeneration(this.gameState.smartMode)
+      );
+      if (this.gameField.isGameOver()) {
+        this.gameStateChange({ gameOver: true });
+      }
 
       setTimeout(play, this.gameState.stepMs);
     };
     play();
+  }
+
+  public applyTemplate(mapState: number[][]): void {
+    this.gameField.applyTemplate(mapState);
+    this.gameView.updateGameField(
+      this.gameField.getState(this.gameState.smartMode)
+    );
   }
 }

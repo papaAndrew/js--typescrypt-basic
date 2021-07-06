@@ -9,7 +9,7 @@
     "test": "jest",
     "prepare": "husky install",
     "build": "webpack",
-    "serve": "webpack serve"
+    "server": "webpack serve"
   },
   "repository": {
     "type": "git",

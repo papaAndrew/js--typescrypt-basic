@@ -1,5 +1,4 @@
 import {
-  Cell,
   CellState,
   STATE_ALIVE,
   STATE_DEAD,
@@ -7,23 +6,17 @@ import {
   toggleCellState,
   countAliveNeighbors,
   getNextGeneration,
+  STATE_WEAK,
+  STATE_RAISE,
 } from "../src/model/utils";
 
-function numsToCells(nums: number[][]): Cell[][] {
-  const numToState = function (num: number): CellState {
-    return num === 0 ? 0 : 1;
-  };
-
-  return nums.map((range, y) =>
-    range.map((value, x) => {
-      return { row: y, col: x, state: numToState(value) };
-    })
-  );
+function numsToCellState(mx: number[][]): CellState[][] {
+  return mx.map((line) => line.map((item) => item as CellState));
 }
 
-function numsToStr(mx: number[][]) {
+function numsToStr(mx: number[][]): string {
   return `\n${mx
-    .map((line) => line.map((item) => item).join(""))
+    .map((line) => line.map((item) => item).join(" "))
     .join("\n")}\n`;
 }
 
@@ -41,7 +34,7 @@ describe("Test utilities", () => {
       });
 
       describe(`getMatrix create two-dim array with ${height} rows and ${width} columns`, () => {
-        matrix.forEach((line: Cell[]) => {
+        matrix.forEach((line) => {
           it(`length of this row is ${width} Cells`, () => {
             expect(line.length).toBe(width);
           });
@@ -52,9 +45,9 @@ describe("Test utilities", () => {
 
   describe("tesing countAliveNeighbors", () => {
     [
-      { states: [[0, 1]], neighbors: [[1, 0]] },
+      { fieldState: [[0, 1]], neighbors: [[1, 0]] },
       {
-        states: [
+        fieldState: [
           [0, 1],
           [0, 1],
         ],
@@ -64,7 +57,7 @@ describe("Test utilities", () => {
         ],
       },
       {
-        states: [
+        fieldState: [
           [0, 0, 1, 0],
           [0, 0, 0, 1],
           [0, 1, 1, 1],
@@ -77,17 +70,16 @@ describe("Test utilities", () => {
       },
     ].forEach((suite) => {
       describe(`for field ${numsToStr(
-        suite.states
+        suite.fieldState
       )} neighbors number is ${numsToStr(suite.neighbors)}`, () => {
-        const gameField: Cell[][] = numsToCells(suite.states);
+        const fieldState: CellState[][] = numsToCellState(suite.fieldState);
 
-        for (let y = 0; y < gameField.length; y++) {
-          const range: Cell[] = gameField[y];
+        for (let y = 0; y < fieldState.length; y++) {
+          const range: CellState[] = fieldState[y];
           for (let x = 0; x < range.length; x++) {
-            const cell: Cell = range[x];
             const expectedValue = suite.neighbors[y][x];
             it(`cell[${y}:${x}] have ${expectedValue} neighbours`, () => {
-              expect(countAliveNeighbors(gameField, cell)).toBe(expectedValue);
+              expect(countAliveNeighbors(fieldState, y, x)).toBe(expectedValue);
             });
           }
         }
@@ -145,33 +137,23 @@ describe("Test utilities", () => {
       it(`for state ${numsToStr(suite.prevState)} the next is ${numsToStr(
         suite.nextState
       )}`, () => {
-        const fieldExpected: Cell[][] = numsToCells(suite.nextState);
-        const fieldBefore: Cell[][] = numsToCells(suite.prevState);
-        const fieldAfter: Cell[][] = getNextGeneration(fieldBefore);
-
-        expect(fieldAfter).toEqual(fieldExpected);
+        expect(getNextGeneration(numsToCellState(suite.prevState))).toEqual(
+          suite.nextState
+        );
       });
     });
   });
 
   describe("Function toggleCellState Invert Cell state", () => {
-    const I: Cell = {
-      row: 0,
-      col: 0,
-      state: STATE_ALIVE,
-    };
-    const O: Cell = {
-      row: 0,
-      col: 0,
-      state: STATE_DEAD,
-    };
-
-    it(`Cell state before: ${I.state}, after: ${O.state}`, () => {
-      expect(toggleCellState(I)).toEqual(STATE_DEAD);
-    });
-
-    it(`Cell state before: ${O.state}, after: ${I.state}`, () => {
-      expect(toggleCellState(O)).toEqual(STATE_ALIVE);
+    [
+      [STATE_ALIVE, STATE_DEAD],
+      [STATE_WEAK, STATE_DEAD],
+      [STATE_DEAD, STATE_ALIVE],
+      [STATE_RAISE, STATE_ALIVE],
+    ].forEach(([stateBefore, stateAfter]) => {
+      it(`Cell state before: ${stateBefore}, after: ${stateAfter}`, () => {
+        expect(toggleCellState(STATE_ALIVE)).toEqual(STATE_DEAD);
+      });
     });
   });
 });
