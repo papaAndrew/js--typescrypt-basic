@@ -36,7 +36,7 @@ table .cell {
 
 input {
   height: 30px;
-  min-width: 80px;
+  width: 80px;
   background-color: whitesmoke;
   margin: 0px 5px 0px 5px;
   text-indent: 20px;
