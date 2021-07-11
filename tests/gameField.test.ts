@@ -154,7 +154,6 @@ describe("Use GameField", () => {
       )} toggled so current state is the same and next state is ${numsToStr(
         suite.nextGeneraton
       )}`, () => {
-        //const gameField: GameField = createFieldWithState(suite.getState);
         gameField.applyTemplate(suite.getState);
 
         const getState: CellState[][] = gameField.getState();

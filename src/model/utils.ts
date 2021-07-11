@@ -14,7 +14,7 @@ export type CellState = 0 | 1 | 2 | 3;
 export function getMatrix(height: number, width: number): CellState[][] {
   return new Array(height)
     .fill([])
-    .map((item) => new Array(width).fill(STATE_DEAD));
+    .map(() => new Array(width).fill(STATE_DEAD));
 }
 
 export function countAliveNeighbors(

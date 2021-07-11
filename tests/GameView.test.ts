@@ -1,4 +1,4 @@
-import { GameWiew } from "../src/view/GameView";
+import { GameView } from "../src/view/GameView";
 
 describe("gameView", () => {
   let el: HTMLElement;
@@ -9,12 +9,12 @@ describe("gameView", () => {
 
   describe("public interface", () => {
     it("is a class", () => {
-      expect(GameWiew).toBeInstanceOf(Function);
-      expect(new GameWiew(el)).toBeInstanceOf(GameWiew);
+      expect(GameView).toBeInstanceOf(Function);
+      expect(new GameView(el)).toBeInstanceOf(GameView);
     });
 
     it("renders some initial markup on construction", () => {
-      new GameWiew(el);
+      new GameView(el);
 
       expect(el.querySelector(".game-field")).not.toBeNull();
 
@@ -27,7 +27,7 @@ describe("gameView", () => {
     });
 
     it("has public methods", () => {
-      const gameView = new GameWiew(el);
+      const gameView = new GameView(el);
 
       expect(gameView.updateGameField).toBeInstanceOf(Function);
       expect(gameView.updateGameState).toBeInstanceOf(Function);
@@ -38,9 +38,9 @@ describe("gameView", () => {
   });
 
   describe("functional interface", () => {
-    let gameView: GameWiew;
+    let gameView: GameView;
     beforeEach(() => {
-      gameView = new GameWiew(el);
+      gameView = new GameView(el);
     });
 
     it("renders field from .updateGameField", () => {

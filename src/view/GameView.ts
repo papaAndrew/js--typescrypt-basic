@@ -9,11 +9,6 @@ export type GameState = {
   caption: string;
 };
 
-/**
- * Message IDs for NotificationEvent.
- */
-//export const AC_CLEAR_FIELD = 1;
-
 export type FieldCellChange = (row: number, column: number) => void;
 export type GameStateChange = (newState: Partial<GameState>) => void;
 
@@ -129,17 +124,11 @@ function getFieldTableElement(el?: HTMLElement): HTMLTableElement {
   }
 }
 
-export class GameWiew implements IGameView {
+export class GameView implements IGameView {
   private el: HTMLElement;
   private fieldHeight = 1;
   private fieldWidth = 0;
 
-  /*   private gameState: GameState = {
-    isPlaying: false,
-    isPaused: false,
-    stepMs: 1000,
-  };
- */
   private cbCellClick: FieldCellChange | undefined;
 
   private cbGameStateChange: GameStateChange | undefined;
@@ -149,12 +138,8 @@ export class GameWiew implements IGameView {
   constructor(parentElement: HTMLElement) {
     this.el = parentElement;
     this.render();
-    //this.updateGameState(this.gameState);
   }
 
-  /**
-   * Отрисовка разметки при обновлении страницы
-   */
   render(): void {
     const newEl = this.el;
 
@@ -209,7 +194,6 @@ export class GameWiew implements IGameView {
 
     newEl.append(controlPanel);
 
-    // игровое поле
     const gameFieldEl: HTMLElement = getGameFieldElement();
 
     const fieldTable: HTMLTableElement = getFieldTableElement();
@@ -277,8 +261,6 @@ export class GameWiew implements IGameView {
       buttonPlay.innerHTML = "Stop";
       buttonPlay.classList.add("run-button--playing");
       buttonPlay.classList.remove("run-button--stopped");
-
-      //console.log("buttonPlay", buttonPlay.innerHTML);
     } else {
       buttonPlay.innerHTML = "Play";
       buttonPlay.classList.add("run-button--stopped");
@@ -287,7 +269,13 @@ export class GameWiew implements IGameView {
   }
   private setCaption(caption: string) {
     const controlPanel = getControlPanelElement(this.el);
-    getMsgBoxElement(controlPanel).innerHTML = caption;
+    const msgBox = getMsgBoxElement(controlPanel);
+    msgBox.innerHTML = caption;
+    if (caption) {
+      msgBox.classList.add("alarm");
+    } else {
+      msgBox.classList.remove("alarm");
+    }
   }
 
   public updateGameState(gameState: Partial<GameState>): void {
