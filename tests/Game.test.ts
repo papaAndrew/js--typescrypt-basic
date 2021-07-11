@@ -67,7 +67,6 @@ describe("Game", () => {
   });
 
   describe("functionality", () => {
-    //let game: Game;
     beforeEach(() => {
       new Game(gameField, gameView, stepDuration);
     });

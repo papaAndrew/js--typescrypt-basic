@@ -11,12 +11,24 @@ div {
   padding: 4px;
 }
 
+header {
+  min-height: 100px;
+  background-color: lightskyblue;
+  display: flex;
+  flex-wrap: wrap;
+  height: 100%;
+  align-content: flex-start;
+  padding: 2%;
+}
+
 table {
   border: 1px solid gray;
   margin: 1px;
 }
 table .cell {
   border: 1px solid gray;
+  min-height: 25px;
+  min-width: 25px;
   height: 25px;
   width: 25px;
   text-align: center;
@@ -34,6 +46,10 @@ table .cell {
   background-color: lightsalmon;
 }
 
+.alarm {
+  background-color: lightpink;
+}
+
 input {
   height: 30px;
   width: 80px;
@@ -48,4 +64,45 @@ button {
   min-width: 80px;
   margin: 0px 5px 0px 20px;
   font-weight: 800;
+}
+
+main {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.game-card {
+  display: inline-block;
+}
+
+.game-card.control-panel {
+  min-width: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-card.control-panel button.add-game {
+  height: 100px;
+  width: 100px;
+  margin: 20px;
+  font-size: xx-large;
+}
+
+.game-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 2% 2%;
+  margin: 5px;
+}
+button.card-close {
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+}
+
+.game-view.control-panel {
+  display: flexbox;
+  flex-wrap: wrap;
 }

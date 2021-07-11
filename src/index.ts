@@ -1,21 +1,7 @@
 import "../style/style.css";
-import { Game } from "./control/Game";
-import { GameField } from "./model/GameField";
-import { GameWiew } from "./view/GameView";
+import { Dashboard } from "./control/Dashboard";
+import { DashboardView } from "./view/DashboardView";
 
-const TEMPLATE_GLIDER: number[][] = [
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-];
+const domMain = document.querySelector(".main") as HTMLElement;
 
-new Game(new GameField(10, 10), new GameWiew(document.body)).applyTemplate(
-  TEMPLATE_GLIDER
-);
+new Dashboard(new DashboardView(domMain));
