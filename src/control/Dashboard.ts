@@ -54,7 +54,7 @@ export class Dashboard {
     this.boardView.removeGameCard(cardID);
   }
 
-  public changeState(msgID: number, data?: string): void {
+  private changeState(msgID: number, data?: string): void {
     switch (msgID) {
       default:
         return;

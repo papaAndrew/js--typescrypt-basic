@@ -20,108 +20,73 @@ export interface IGameView {
   onFieldSizeChange(cb: FieldCellChange): void;
 }
 
-function getSizeYElement(el?: HTMLElement): HTMLInputElement {
+function getElement<T extends HTMLElement>(
+  selector: string,
+  el?: HTMLElement
+): T {
   if (el) {
-    return el.querySelector(
-      "input.field-size.field-size--height"
-    ) as HTMLInputElement;
+    return el.querySelector(selector) as T;
   } else {
-    const input: HTMLInputElement = document.createElement("input");
-    input.classList.add("field-size", "field-size--height");
+    const [elName, ...classNames] = selector.split(".");
+    const el: T = document.createElement(elName) as T;
+    el.classList.add(...classNames);
+    return el;
+  }
+}
+function getSizeYElement(el?: HTMLElement): HTMLInputElement {
+  const input = getElement<HTMLInputElement>(
+    "input.field-size.field-size--height",
+    el
+  );
+  if (!el) {
     input.type = "number";
     input.min = "1";
     input.step = "1";
-    return input;
   }
+  return input;
 }
-
 function getSizeXElement(el?: HTMLElement): HTMLInputElement {
-  if (el) {
-    return el.querySelector(
-      "input.field-size.field-size--width"
-    ) as HTMLInputElement;
-  } else {
-    const input: HTMLInputElement = document.createElement("input");
-    input.classList.add("field-size", "field-size--width");
+  const input = getElement<HTMLInputElement>(
+    "input.field-size.field-size--width",
+    el
+  );
+  if (!el) {
     input.type = "number";
     input.min = "0";
     input.step = "1";
-    return input;
   }
+  return input;
 }
-
 function getStepDurationElement(el?: HTMLElement): HTMLInputElement {
-  if (el) {
-    return el.querySelector(
-      "input.game-state.step-duration"
-    ) as HTMLInputElement;
-  } else {
-    const input: HTMLInputElement = document.createElement("input");
-    input.classList.add("game-state", "step-duration");
+  const input = getElement<HTMLInputElement>(
+    "input.game-state.step-duration",
+    el
+  );
+  if (!el) {
     input.type = "range";
     input.min = "10";
     input.max = "2000";
     input.step = "10";
-    return input;
   }
+  return input;
 }
-
 function getPlayElement(el?: HTMLElement): HTMLButtonElement {
-  if (el) {
-    return el.querySelector("button.run-button") as HTMLButtonElement;
-  } else {
-    const button: HTMLButtonElement = document.createElement("button");
-    button.classList.add("run-button");
-    return button;
-  }
+  return getElement<HTMLButtonElement>("button.run-button", el);
 }
 function getMsgBoxElement(el?: HTMLElement): HTMLDivElement {
-  if (el) {
-    return el.querySelector("div.msg-box") as HTMLDivElement;
-  } else {
-    const div: HTMLDivElement = document.createElement("div");
-    div.classList.add("msg-box");
-    return div;
-  }
+  return getElement<HTMLDivElement>("div.msg-box", el);
 }
 function getClearElement(el?: HTMLElement): HTMLButtonElement {
-  if (el) {
-    return el.querySelector("button.clear-button") as HTMLButtonElement;
-  } else {
-    const button: HTMLButtonElement = document.createElement("button");
-    button.classList.add("clear-button");
-    return button;
-  }
+  return getElement<HTMLButtonElement>("button.clear-button", el);
 }
-
 function getControlPanelElement(el?: HTMLElement): HTMLDivElement {
-  if (el) {
-    return el.querySelector("div.control-panel") as HTMLDivElement;
-  } else {
-    const controlPanel: HTMLDivElement = document.createElement("div");
-    controlPanel.classList.add("control-panel");
-    return controlPanel;
-  }
+  return getElement<HTMLDivElement>("div.control-panel", el);
 }
-
 function getGameFieldElement(el?: HTMLElement): HTMLDivElement {
-  if (el) {
-    return el.querySelector("div.game-field") as HTMLDivElement;
-  } else {
-    const gameField: HTMLDivElement = document.createElement("div");
-    gameField.classList.add("game-field");
-    return gameField;
-  }
+  return getElement<HTMLDivElement>("div.game-field", el);
 }
-
 function getFieldTableElement(el?: HTMLElement): HTMLTableElement {
-  if (el) {
-    return el.querySelector("table.cells-grid") as HTMLTableElement;
-  } else {
-    const table: HTMLTableElement = document.createElement("table");
-    table.classList.add("cells-grid");
-    return table;
-  }
+  return getElement<HTMLTableElement>("table.cells-grid", el);
 }
 
 export class GameView implements IGameView {

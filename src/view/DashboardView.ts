@@ -10,64 +10,41 @@ export interface IDashboardView {
   onStateChange(listener: StateChangeEvent): void;
 }
 
+function getElement<T extends HTMLElement>(
+  selector: string,
+  el?: HTMLElement
+): T {
+  if (el) {
+    return el.querySelector(selector) as T;
+  } else {
+    const [elName, ...classNames] = selector.split(".");
+    const el: T = document.createElement(elName) as T;
+    el.classList.add(...classNames);
+    return el;
+  }
+}
 function getGameCardElement(el?: HTMLElement): HTMLDivElement {
-  if (el) {
-    return el.querySelector("div.game-card") as HTMLDivElement;
-  } else {
-    const div: HTMLDivElement = document.createElement("div");
-    div.classList.add("game-card");
-    return div;
-  }
+  return getElement<HTMLDivElement>("div.game-card", el);
 }
-
 function getButtonAddGameElement(el?: HTMLElement): HTMLButtonElement {
-  if (el) {
-    return el.querySelector("button.add-game") as HTMLButtonElement;
-  } else {
-    const button: HTMLButtonElement = document.createElement("button");
-    button.classList.add("add-game");
-    return button;
-  }
+  return getElement<HTMLButtonElement>("button.add-game", el);
 }
-
 function getCardHeaderElement(el?: HTMLElement): HTMLDivElement {
-  if (el) {
-    return el.querySelector(".card-header") as HTMLDivElement;
-  } else {
-    const div: HTMLHeadingElement = document.createElement("div");
-    div.classList.add("card-header");
-    return div;
-  }
+  return getElement<HTMLDivElement>("div.card-header", el);
 }
 function getCardCaptionElement(el?: HTMLElement): HTMLHeadingElement {
-  if (el) {
-    return el.querySelector(".card-caption") as HTMLHeadingElement;
-  } else {
-    const hyz: HTMLHeadingElement = document.createElement("h4");
-    hyz.classList.add("card-caption");
-    return hyz;
-  }
+  return getElement<HTMLHeadingElement>("h4.card-caption", el);
 }
 function getCardCloseElement(el?: HTMLElement): HTMLButtonElement {
-  if (el) {
-    return el.querySelector(".card-close") as HTMLButtonElement;
-  } else {
-    const button: HTMLButtonElement = document.createElement("button");
-    button.classList.add("card-close");
-    return button;
-  }
+  return getElement<HTMLButtonElement>("button.card-close", el);
 }
-
 function getGameViewElement(el?: HTMLElement): HTMLDivElement {
-  if (el) {
-    return el.querySelector(`div.game-view`) as HTMLDivElement;
-  } else {
-    const div: HTMLDivElement = document.createElement("div");
-    div.classList.add("game-view");
-    return div;
-  }
+  return getElement<HTMLDivElement>("div.game-view", el);
 }
 
+/**
+ * Dashboard
+ */
 export class DashboardView implements IDashboardView {
   private dashBoard: HTMLElement;
   private cbStateChange: StateChangeEvent | undefined;
