@@ -1,0 +1,20 @@
+name: PR Sanity Check
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.1
+
+      - name: Install packages
+        run: |
+          npm install
+      - name: Lint check
+        run: |
+          npm run lint
+      - name: Jest test
+        run: |
+          npm run test
