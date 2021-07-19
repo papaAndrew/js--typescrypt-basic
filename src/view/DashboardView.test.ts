@@ -1,8 +1,4 @@
-import {
-  DashboardView,
-  MSG_CLOSE_CARD,
-  MSG_NEW_CARD,
-} from "../src/view/DashboardView";
+import { DashboardView, MSG_CLOSE_CARD, MSG_NEW_CARD } from "./DashboardView";
 
 let domMain: HTMLElement;
 let boardView: DashboardView;

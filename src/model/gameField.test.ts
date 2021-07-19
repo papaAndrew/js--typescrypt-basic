@@ -1,5 +1,5 @@
-import { GameField } from "../src/model/GameField";
-import { CellState } from "../src/model/utils";
+import { GameField } from "./GameField";
+import { CellState } from "./utils";
 
 function numsToStr(mx: number[][]) {
   return `\n${mx

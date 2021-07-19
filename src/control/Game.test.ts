@@ -1,7 +1,7 @@
-import { Game } from "../src/control/Game";
-import { CellState } from "../src/model/utils";
-import { IGameField } from "../src/model/GameField";
-import { GameState, IGameView } from "../src/view/GameView";
+import { Game } from "./Game";
+import { CellState } from "../model/utils";
+import { IGameField } from "../model/GameField";
+import { GameState, IGameView } from "../view/GameView";
 
 const sleep = (x: number) => new Promise((res) => setTimeout(res, x));
 

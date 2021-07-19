@@ -1,9 +1,9 @@
-import { Dashboard } from "../src/control/Dashboard";
+import { Dashboard } from "./Dashboard";
 import {
   IDashboardView,
   MSG_CLOSE_CARD,
   MSG_NEW_CARD,
-} from "../src/view/DashboardView";
+} from "../view/DashboardView";
 
 describe("Dashboard", () => {
   let boardView: IDashboardView;

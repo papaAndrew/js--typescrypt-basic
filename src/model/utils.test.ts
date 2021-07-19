@@ -8,7 +8,7 @@ import {
   getNextGeneration,
   STATE_WEAK,
   STATE_RAISE,
-} from "../src/model/utils";
+} from "./utils";
 
 function numsToCellState(mx: number[][]): CellState[][] {
   return mx.map((line) => line.map((item) => item as CellState));

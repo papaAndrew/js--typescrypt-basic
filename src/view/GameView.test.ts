@@ -1,4 +1,4 @@
-import { GameView } from "../src/view/GameView";
+import { GameView } from "./GameView";
 
 describe("gameView", () => {
   let el: HTMLElement;
